@@ -7,7 +7,7 @@ import CaseStudies from "@/components/sections/CaseStudies";
 import Process from "@/components/sections/Process";
 import Services from "@/components/sections/Services";
 import FAQ from "@/components/sections/FAQ";
-import CTAFinal from "@/components/sections/CTAFinal";
+import CTAFinal from "@/components/sections/CtaFinal";
 
 export default function Home() {
   return (
