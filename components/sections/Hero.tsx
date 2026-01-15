@@ -1,89 +1,110 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import Carousel from "@/components/ui/Carousel";
 
-const Hero = () => {
+// Placeholder images from Unsplash
+const heroImages = [
+    {
+        src: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=800&h=600&fit=crop",
+        alt: "Iglesia moderna con vitral",
+    },
+    {
+        src: "https://images.unsplash.com/photo-1516997121675-4c2d1684aa7e?w=800&h=600&fit=crop",
+        alt: "Diseño gráfico profesional",
+    },
+    {
+        src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop",
+        alt: "Equipo trabajando juntos",
+    },
+    {
+        src: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop",
+        alt: "Reunión estratégica de marketing",
+    },
+];
+
+const trustBullets = [
+    "Especializados en lenguaje pastoral y eclesial",
+    "+15 instituciones católicas confían en nosotros",
+    "Diagnóstico profesional sin compromiso",
+];
+
+export default function Hero() {
     return (
-        <section className="relative min-h-screen flex items-center justify-center bg-lumen-vision overflow-hidden">
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-lumen-vision to-lumen-vision/90" />
-
-            {/* Subtle Pattern */}
-            <div className="absolute inset-0 opacity-5">
-                <div className="absolute inset-0" style={{
-                    backgroundImage: `radial-gradient(circle at 2px 2px, #F5F5F5 1px, transparent 0)`,
-                    backgroundSize: '40px 40px'
-                }} />
-            </div>
-
-            <div className="container relative z-10 px-6 md:px-8 text-center max-w-5xl mx-auto">
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="space-y-8"
-                >
-                    {/* Logo/Brand */}
+        <section id="hero" className="section-padding pt-32 lg:pt-40">
+            <div className="container-custom">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                    {/* Left: Text Content */}
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2, duration: 0.6 }}
-                    >
-                        <span className="font-display text-lg tracking-[0.3em] text-lumen-clarity/70 uppercase">
-                            Lumen Creativo
-                        </span>
-                    </motion.div>
-
-                    {/* Main Title */}
-                    <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl font-bold text-lumen-clarity tracking-wide leading-tight">
-                        Iluminamos los proyectos <br className="hidden md:block" />
-                        que transforman el mundo
-                    </h1>
-
-                    {/* Subtitle */}
-                    <p className="text-xl md:text-2xl text-lumen-clarity/80 max-w-3xl mx-auto leading-relaxed font-light">
-                        Marketing digital de alta gama con esencia católica para instituciones, congregaciones y causas con propósito.
-                    </p>
-
-                    {/* CTAs */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4, duration: 0.6 }}
-                        className="flex flex-col sm:flex-row gap-5 justify-center items-center pt-6"
+                        transition={{ duration: 0.8 }}
+                        className="space-y-8"
                     >
-                        <Button
-                            size="lg"
-                            className="h-14 px-8 text-lg rounded-lg bg-lumen-energy hover:bg-lumen-energy/90 text-white shadow-xl transition-all duration-400"
-                        >
-                            Iniciar Consultoría Gratuita
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="h-14 px-8 text-lg rounded-lg border-2 border-lumen-clarity text-lumen-clarity hover:bg-lumen-clarity/10 transition-all duration-400"
-                        >
-                            Ver Nuestros Servicios
-                        </Button>
-                    </motion.div>
-                </motion.div>
-            </div>
+                        {/* Main Headline */}
+                        <h1 className="text-lumen-structure text-balance">
+                            La comunicación de tu obra merece más que{" "}
+                            <span className="text-lumen-creative">posts bonitos</span>
+                        </h1>
 
-            {/* Scroll Indicator */}
-            <motion.div
-                className="absolute bottom-10 left-1/2 -translate-x-1/2"
-                animate={{ y: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-            >
-                <div className="w-6 h-10 border-2 border-lumen-clarity/50 rounded-full flex justify-center pt-2">
-                    <div className="w-1 h-2 bg-lumen-clarity/70 rounded-full" />
+                        {/* Subheadline */}
+                        <p className="text-xl text-gray-600 leading-relaxed max-w-xl">
+                            Transformamos la presencia digital de instituciones católicas
+                            con estrategia, coherencia y sentido profundo.
+                        </p>
+
+                        {/* Trust Bullets */}
+                        <ul className="space-y-3">
+                            {trustBullets.map((bullet, index) => (
+                                <motion.li
+                                    key={index}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3 + index * 0.1 }}
+                                    className="flex items-center gap-3 text-gray-700"
+                                >
+                                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-green-600" />
+                                    </span>
+                                    {bullet}
+                                </motion.li>
+                            ))}
+                        </ul>
+
+                        {/* CTAs */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="flex flex-col sm:flex-row gap-4 pt-4"
+                        >
+                            <Button size="lg">
+                                Agendar consultoría gratuita
+                                <ArrowRight className="w-5 h-5" />
+                            </Button>
+                            <Button variant="link" size="lg">
+                                Ver casos de éxito
+                            </Button>
+                        </motion.div>
+                    </motion.div>
+
+                    {/* Right: Carousel */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                    >
+                        <Carousel
+                            images={heroImages}
+                            autoPlay={true}
+                            interval={4000}
+                            className="shadow-2xl shadow-gray-300/50"
+                        />
+                    </motion.div>
                 </div>
-            </motion.div>
+            </div>
         </section>
     );
-};
-
-export default Hero;
+}

@@ -1,57 +1,246 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
+import Card from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Mail } from "lucide-react";
 
-const CtaFinal = () => {
+const trustBadges = [
+    "Respuesta en menos de 24 horas",
+    "Diagnóstico visual de tus redes incluido",
+    "Propuesta personalizada según tu presupuesto",
+];
+
+export default function CTAFinal() {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [formData, setFormData] = useState({
+        nombre: "",
+        email: "",
+        whatsapp: "",
+        institucion: "",
+        necesidad: "",
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        // Simulate form submission
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        setIsSubmitting(false);
+        setIsSubmitted(true);
+    };
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
     return (
-        <section className="py-24 md:py-32 bg-lumen-structure">
-            <div className="container px-6 md:px-8 mx-auto text-center max-w-4xl">
+        <section id="contacto" className="section-padding bg-gradient-to-b from-lumen-clarity to-white">
+            <div className="container-custom">
+                {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
                     viewport={{ once: true }}
-                    className="space-y-8"
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-12"
                 >
-                    {/* Title */}
-                    <h2 className="font-serif text-4xl md:text-5xl font-bold text-lumen-clarity leading-tight">
-                        ¿Listo para iluminar tu proyecto?
+                    <h2 className="text-lumen-structure mb-6">
+                        Tu obra merece comunicar con la{" "}
+                        <span className="text-lumen-creative">misma claridad</span>
+                        <br className="hidden md:block" />
+                        con la que vive su misión
                     </h2>
-
-                    {/* Subtitle */}
-                    <p className="text-xl text-lumen-clarity/70 max-w-2xl mx-auto leading-relaxed">
-                        Agenda una consultoría gratuita de 30 minutos y descubre cómo podemos transformar tu presencia digital.
-                    </p>
-
-                    {/* CTAs */}
-                    <div className="flex flex-col sm:flex-row gap-5 justify-center items-center pt-4">
-                        <Button
-                            size="lg"
-                            className="h-14 px-10 text-xl rounded-lg bg-lumen-energy hover:scale-105 transform transition-transform text-white"
-                        >
-                            Agendar Consultoría
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="h-14 px-8 text-lg rounded-lg border-2 border-lumen-creative text-lumen-creative hover:bg-lumen-creative/10 transition-colors"
-                        >
-                            <Mail className="mr-2 w-5 h-5" />
-                            Escríbenos
-                        </Button>
+                    <div className="text-lg text-gray-600 max-w-2xl mx-auto space-y-2">
+                        <p>Agenda 30 minutos con nosotros.</p>
+                        <p className="text-base">
+                            Sin compromiso. Sin letra pequeña. Sin sorpresas.
+                            <br />
+                            Solo una conversación honesta sobre cómo podemos ayudarte.
+                        </p>
                     </div>
+                </motion.div>
 
-                    {/* Trust Signal */}
-                    <p className="text-sm text-lumen-clarity/50 pt-6">
-                        Sin compromisos. Sin presiones. Solo conversación con propósito.
-                    </p>
+                {/* Form Card */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="max-w-2xl mx-auto"
+                >
+                    <Card className="p-8 md:p-12 shadow-2xl">
+                        {isSubmitted ? (
+                            /* Success State */
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="text-center py-8 space-y-4"
+                            >
+                                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                                    <Check className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-lumen-structure">
+                                    ¡Mensaje enviado!
+                                </h3>
+                                <p className="text-gray-600">
+                                    Te responderemos en menos de 24 horas.
+                                    <br />
+                                    Revisa tu email (y la carpeta de spam).
+                                </p>
+                            </motion.div>
+                        ) : (
+                            /* Form */
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {/* Nombre */}
+                                <div>
+                                    <label
+                                        htmlFor="nombre"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Nombre completo *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="nombre"
+                                        name="nombre"
+                                        required
+                                        value={formData.nombre}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                        placeholder="Tu nombre"
+                                    />
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label
+                                        htmlFor="email"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Email institucional *
+                                    </label>
+                                    <input
+                                        type="email"
+                                        id="email"
+                                        name="email"
+                                        required
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                        placeholder="correo@institucion.org"
+                                    />
+                                </div>
+
+                                {/* WhatsApp */}
+                                <div>
+                                    <label
+                                        htmlFor="whatsapp"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        WhatsApp *
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        id="whatsapp"
+                                        name="whatsapp"
+                                        required
+                                        value={formData.whatsapp}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                        placeholder="+58 412 1234567"
+                                    />
+                                </div>
+
+                                {/* Institución y cargo */}
+                                <div>
+                                    <label
+                                        htmlFor="institucion"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        Institución y cargo *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="institucion"
+                                        name="institucion"
+                                        required
+                                        value={formData.institucion}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                        placeholder="Ej: Congregación San José - Directora de Comunicaciones"
+                                    />
+                                </div>
+
+                                {/* Necesidad */}
+                                <div>
+                                    <label
+                                        htmlFor="necesidad"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
+                                        ¿Qué necesitas mejorar en tu comunicación? *
+                                    </label>
+                                    <textarea
+                                        id="necesidad"
+                                        name="necesidad"
+                                        required
+                                        rows={3}
+                                        value={formData.necesidad}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors resize-none"
+                                        placeholder="Cuéntanos brevemente tu situación actual..."
+                                    />
+                                </div>
+
+                                {/* Submit Button */}
+                                <Button
+                                    type="submit"
+                                    size="xl"
+                                    className="w-full"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Enviando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Agendar mi consultoría gratuita
+                                            <ArrowRight className="w-5 h-5" />
+                                        </>
+                                    )}
+                                </Button>
+                            </form>
+                        )}
+                    </Card>
+                </motion.div>
+
+                {/* Trust Badges */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4 }}
+                    className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto"
+                >
+                    {trustBadges.map((badge, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center justify-center gap-2 text-sm text-gray-600"
+                        >
+                            <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                            {badge}
+                        </div>
+                    ))}
                 </motion.div>
             </div>
         </section>
     );
-};
-
-export default CtaFinal;
+}

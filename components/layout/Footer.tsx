@@ -1,72 +1,103 @@
+"use client";
+
 import Link from "next/link";
-import { Instagram, Linkedin, Twitter, Facebook } from "lucide-react";
+import { Instagram, Facebook, Mail, Phone, MapPin } from "lucide-react";
 
-const Footer = () => {
+export default function Footer() {
+    const currentYear = new Date().getFullYear();
+
     return (
-        <footer className="bg-lumen-structure text-lumen-clarity pt-16 pb-8">
-            <div className="container mx-auto px-6 md:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <footer className="bg-lumen-structure text-white">
+            <div className="container-custom py-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {/* Brand */}
-                    <div className="col-span-1 md:col-span-1">
-                        <h3 className="font-display text-xl tracking-wider text-lumen-clarity mb-4">
-                            Lumen Creativo
+                    <div className="space-y-4">
+                        <h3 className="text-2xl font-bold">
+                            Lumen<span className="text-lumen-energy">Creativo</span>
                         </h3>
-                        <p className="text-sm text-lumen-clarity/60 mb-6 leading-relaxed">
-                            Iluminamos proyectos que transforman el mundo con tecnología y propósito.
+                        <p className="text-gray-400 text-sm leading-relaxed">
+                            Marketing digital con propósito para instituciones católicas
+                            y organizaciones que transforman el mundo.
                         </p>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Enlaces</h4>
+                        <ul className="space-y-2">
+                            <li>
+                                <Link href="#servicios" className="text-gray-400 hover:text-lumen-energy transition-colors">
+                                    Servicios
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="#proceso" className="text-gray-400 hover:text-lumen-energy transition-colors">
+                                    Cómo trabajamos
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="#casos" className="text-gray-400 hover:text-lumen-energy transition-colors">
+                                    Casos de éxito
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href="#faq" className="text-gray-400 hover:text-lumen-energy transition-colors">
+                                    Preguntas frecuentes
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Contact */}
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Contacto</h4>
+                        <ul className="space-y-3">
+                            <li className="flex items-center gap-3 text-gray-400">
+                                <Mail className="w-5 h-5 text-lumen-creative" />
+                                <a href="mailto:lumencreativo.lat@gmail.com" className="hover:text-lumen-energy transition-colors">
+                                    lumencreativo.lat@gmail.com
+                                </a>
+                            </li>
+                            <li className="flex items-center gap-3 text-gray-400">
+                                <Phone className="w-5 h-5 text-lumen-creative" />
+                                <span>WhatsApp disponible</span>
+                            </li>
+                            <li className="flex items-center gap-3 text-gray-400">
+                                <MapPin className="w-5 h-5 text-lumen-creative" />
+                                <span>Venezuela</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {/* Social */}
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-lg">Síguenos</h4>
                         <div className="flex gap-4">
-                            <Link href="#" className="text-lumen-clarity/50 hover:text-lumen-energy transition-colors">
-                                <Instagram size={20} />
-                            </Link>
-                            <Link href="#" className="text-lumen-clarity/50 hover:text-lumen-energy transition-colors">
-                                <Linkedin size={20} />
-                            </Link>
-                            <Link href="#" className="text-lumen-clarity/50 hover:text-lumen-energy transition-colors">
-                                <Twitter size={20} />
-                            </Link>
-                            <Link href="#" className="text-lumen-clarity/50 hover:text-lumen-energy transition-colors">
-                                <Facebook size={20} />
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Links */}
-                    <div>
-                        <h4 className="font-semibold text-lumen-clarity mb-4 text-sm uppercase tracking-wider">Explorar</h4>
-                        <ul className="space-y-3 text-sm text-lumen-clarity/60">
-                            <li><Link href="#servicios" className="hover:text-lumen-energy transition-colors">Servicios</Link></li>
-                            <li><Link href="#filosofia" className="hover:text-lumen-energy transition-colors">Filosofía</Link></li>
-                            <li><Link href="#contacto" className="hover:text-lumen-energy transition-colors">Contacto</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Legal */}
-                    <div>
-                        <h4 className="font-semibold text-lumen-clarity mb-4 text-sm uppercase tracking-wider">Legal</h4>
-                        <ul className="space-y-3 text-sm text-lumen-clarity/60">
-                            <li><Link href="/privacidad" className="hover:text-lumen-energy transition-colors">Política de Privacidad</Link></li>
-                            <li><Link href="/terminos" className="hover:text-lumen-energy transition-colors">Términos de Servicio</Link></li>
-                        </ul>
-                    </div>
-
-                    {/* Quote */}
-                    <div>
-                        <div className="border-l-2 border-lumen-creative pl-4 py-2">
-                            <p className="text-sm italic text-lumen-clarity/70 leading-relaxed">
-                                "La luz brilla en las tinieblas, y las tinieblas no la vencieron."
-                            </p>
-                            <p className="text-xs text-lumen-energy mt-2 font-medium">— Juan 1:5</p>
+                            <a
+                                href="https://instagram.com/lumencreativo"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-lumen-energy transition-colors"
+                            >
+                                <Instagram className="w-5 h-5" />
+                            </a>
+                            <a
+                                href="https://facebook.com/lumencreativo"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-lumen-energy transition-colors"
+                            >
+                                <Facebook className="w-5 h-5" />
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <div className="border-t border-lumen-clarity/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-lumen-clarity/40">
-                    <p>&copy; {new Date().getFullYear()} Lumen Creativo. Todos los derechos reservados.</p>
-                    <p className="mt-2 md:mt-0">Diseñado con ♥ y Fe.</p>
+                {/* Bottom Bar */}
+                <div className="border-t border-white/10 mt-12 pt-8 text-center text-gray-500 text-sm">
+                    <p>© {currentYear} Lumen Creativo. Todos los derechos reservados.</p>
                 </div>
             </div>
         </footer>
     );
-};
-
-export default Footer;
+}
