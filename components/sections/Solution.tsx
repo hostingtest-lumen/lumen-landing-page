@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Target, Palette, MessageCircle, ArrowRight } from "lucide-react";
 import Card from "@/components/ui/Card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 const pillars = [
     {
@@ -105,10 +105,10 @@ export default function Solution() {
                     transition={{ delay: 0.4 }}
                     className="text-center mt-12"
                 >
-                    <Button size="lg">
+                    <a href="#contacto" className={buttonVariants({ size: "lg" })}>
                         Agendar diagnóstico gratuito
                         <ArrowRight className="w-5 h-5" />
-                    </Button>
+                    </a>
                 </motion.div>
             </div>
         </section>

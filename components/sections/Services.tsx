@@ -10,7 +10,7 @@ import {
     ArrowRight
 } from "lucide-react";
 import Card from "@/components/ui/Card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 const services = [
     {
@@ -122,10 +122,10 @@ export default function Services() {
                     <p className="text-sm text-gray-600 italic">
                         * Cada propuesta se personaliza según tu presupuesto y necesidades
                     </p>
-                    <Button size="lg">
+                    <a href="#contacto" className={buttonVariants({ size: "lg" })}>
                         Hablar sobre mi caso específico
                         <ArrowRight className="w-5 h-5" />
-                    </Button>
+                    </a>
                 </motion.div>
             </div>
         </section>

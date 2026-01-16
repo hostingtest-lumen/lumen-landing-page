@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import Carousel from "@/components/ui/Carousel";
 
 // Placeholder images from Unsplash
@@ -80,13 +80,13 @@ export default function Hero() {
                             transition={{ delay: 0.6 }}
                             className="flex flex-col sm:flex-row gap-4 pt-4"
                         >
-                            <Button size="lg">
+                            <a href="#contacto" className={buttonVariants({ size: "lg" })}>
                                 Agendar consultoría gratuita
                                 <ArrowRight className="w-5 h-5" />
-                            </Button>
-                            <Button variant="link" size="lg">
+                            </a>
+                            <a href="#casos" className={buttonVariants({ variant: "link", size: "lg" })}>
                                 Ver casos de éxito
-                            </Button>
+                            </a>
                         </motion.div>
                     </motion.div>
 

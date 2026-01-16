@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 const navLinks = [
     { name: "Inicio", href: "#hero" },
@@ -31,33 +31,33 @@ export default function Navbar() {
             initial={{ y: -100 }}
             animate={{ y: 0 }}
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
-                    ? "bg-white/95 backdrop-blur-md shadow-lg"
-                    : "bg-transparent"
+                ? "bg-white/95 backdrop-blur-md shadow-lg"
+                : "bg-transparent"
                 }`}
         >
             <div className="container-custom">
                 <div className="flex items-center justify-between h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
+                    <a href="#hero" className="flex items-center gap-2">
                         <span className="text-2xl font-bold text-lumen-structure">
                             Lumen<span className="text-lumen-energy">Creativo</span>
                         </span>
-                    </Link>
+                    </a>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-8">
                         {navLinks.map((link) => (
-                            <Link
+                            <a
                                 key={link.name}
                                 href={link.href}
                                 className="text-lumen-structure/80 hover:text-lumen-creative font-medium transition-colors"
                             >
                                 {link.name}
-                            </Link>
+                            </a>
                         ))}
-                        <Button size="default">
+                        <a href="#contacto" className={buttonVariants({ size: "default" })}>
                             Agendar consultoría
-                        </Button>
+                        </a>
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -84,19 +84,23 @@ export default function Navbar() {
                     >
                         <div className="flex flex-col gap-4 pt-4">
                             {navLinks.map((link) => (
-                                <Link
+                                <a
                                     key={link.name}
                                     href={link.href}
                                     className="text-lumen-structure/80 hover:text-lumen-creative font-medium px-4 py-2"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
                                     {link.name}
-                                </Link>
+                                </a>
                             ))}
                             <div className="px-4 pt-2">
-                                <Button className="w-full">
+                                <a
+                                    href="#contacto"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={buttonVariants({ className: "w-full" })}
+                                >
                                     Agendar consultoría
-                                </Button>
+                                </a>
                             </div>
                         </div>
                     </motion.div>

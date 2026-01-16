@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const trustBadges = [
     "Respuesta en menos de 24 horas",
@@ -12,13 +13,15 @@ const trustBadges = [
     "Propuesta personalizada según tu presupuesto",
 ];
 
-export default function CTAFinal() {
+export default function CtaFinal() {
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isSubmitted, setIsSubmitted] = useState(false);
+    // const [isSubmitted, setIsSubmitted] = useState(false); // Ya no se usa estado local, redirigimos
     const [formData, setFormData] = useState({
         nombre: "",
         email: "",
         whatsapp: "",
+        instagram: "",
         institucion: "",
         necesidad: "",
     });
@@ -43,14 +46,15 @@ export default function CTAFinal() {
                 throw new Error(errorMessage);
             }
 
-            setIsSubmitted(true);
+            // ÉXITO: Redirigir a la página de gracias
+            router.push("/gracias");
+
         } catch (error: any) {
             console.error("Error enviando formulario:", error);
-            // Mostrar el error real al usuario para depurar
             alert(`Error del sistema: ${error.message}`);
-        } finally {
-            setIsSubmitting(false);
+            setIsSubmitting(false); // Solo bajamos el loading si hubo error
         }
+        // No bajamos loading en éxito porque la página va a cambiar
     };
 
     const handleChange = (
@@ -95,149 +99,147 @@ export default function CTAFinal() {
                     className="max-w-2xl mx-auto"
                 >
                     <Card className="p-8 md:p-12 shadow-2xl">
-                        {isSubmitted ? (
-                            /* Success State */
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="text-center py-8 space-y-4"
-                            >
-                                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                                    <Check className="w-8 h-8 text-green-600" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-lumen-structure">
-                                    ¡Mensaje enviado!
-                                </h3>
-                                <p className="text-gray-600">
-                                    Te responderemos en menos de 24 horas.
-                                    <br />
-                                    Revisa tu email (y la carpeta de spam).
-                                </p>
-                            </motion.div>
-                        ) : (
-                            /* Form */
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                {/* Nombre */}
-                                <div>
-                                    <label
-                                        htmlFor="nombre"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        Nombre completo *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="nombre"
-                                        name="nombre"
-                                        required
-                                        value={formData.nombre}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
-                                        placeholder="Tu nombre"
-                                    />
-                                </div>
-
-                                {/* Email */}
-                                <div>
-                                    <label
-                                        htmlFor="email"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        Email institucional *
-                                    </label>
-                                    <input
-                                        type="email"
-                                        id="email"
-                                        name="email"
-                                        required
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
-                                        placeholder="correo@institucion.org"
-                                    />
-                                </div>
-
-                                {/* WhatsApp */}
-                                <div>
-                                    <label
-                                        htmlFor="whatsapp"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        WhatsApp *
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="whatsapp"
-                                        name="whatsapp"
-                                        required
-                                        value={formData.whatsapp}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
-                                        placeholder="+58 412 1234567"
-                                    />
-                                </div>
-
-                                {/* Institución y cargo */}
-                                <div>
-                                    <label
-                                        htmlFor="institucion"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        Institución y cargo *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="institucion"
-                                        name="institucion"
-                                        required
-                                        value={formData.institucion}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
-                                        placeholder="Ej: Congregación San José - Directora de Comunicaciones"
-                                    />
-                                </div>
-
-                                {/* Necesidad */}
-                                <div>
-                                    <label
-                                        htmlFor="necesidad"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
-                                    >
-                                        ¿Qué necesitas mejorar en tu comunicación? *
-                                    </label>
-                                    <textarea
-                                        id="necesidad"
-                                        name="necesidad"
-                                        required
-                                        rows={3}
-                                        value={formData.necesidad}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors resize-none"
-                                        placeholder="Cuéntanos brevemente tu situación actual..."
-                                    />
-                                </div>
-
-                                {/* Submit Button */}
-                                <Button
-                                    type="submit"
-                                    size="xl"
-                                    className="w-full"
-                                    disabled={isSubmitting}
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Nombre */}
+                            <div>
+                                <label
+                                    htmlFor="nombre"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
                                 >
-                                    {isSubmitting ? (
-                                        <>
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                            Enviando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Agendar mi consultoría gratuita
-                                            <ArrowRight className="w-5 h-5" />
-                                        </>
-                                    )}
-                                </Button>
-                            </form>
-                        )}
+                                    Nombre completo *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="nombre"
+                                    name="nombre"
+                                    required
+                                    value={formData.nombre}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                    placeholder="Tu nombre"
+                                />
+                            </div>
+
+                            {/* Email */}
+                            <div>
+                                <label
+                                    htmlFor="email"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Email institucional *
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                    placeholder="correo@institucion.org"
+                                />
+                            </div>
+
+                            {/* WhatsApp */}
+                            <div>
+                                <label
+                                    htmlFor="whatsapp"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    WhatsApp *
+                                </label>
+                                <input
+                                    type="tel"
+                                    id="whatsapp"
+                                    name="whatsapp"
+                                    required
+                                    value={formData.whatsapp}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                    placeholder="+58 412 1234567"
+                                />
+                            </div>
+
+                            {/* Instagram (New) */}
+                            <div>
+                                <label
+                                    htmlFor="instagram"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Instagram (opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    id="instagram"
+                                    name="instagram"
+                                    value={formData.instagram}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                    placeholder="@usuario"
+                                />
+                            </div>
+
+                            {/* Institución y cargo */}
+                            <div>
+                                <label
+                                    htmlFor="institucion"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    Institución y cargo *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="institucion"
+                                    name="institucion"
+                                    required
+                                    value={formData.institucion}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors"
+                                    placeholder="Ej: Congregación San José - Directora de Comunicaciones"
+                                />
+                            </div>
+
+                            {/* Necesidad */}
+                            <div>
+                                <label
+                                    htmlFor="necesidad"
+                                    className="block text-sm font-medium text-gray-700 mb-2"
+                                >
+                                    ¿Qué necesitas mejorar en tu comunicación? *
+                                </label>
+                                <textarea
+                                    id="necesidad"
+                                    name="necesidad"
+                                    required
+                                    rows={3}
+                                    value={formData.necesidad}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-lumen-creative focus:outline-none transition-colors resize-none"
+                                    placeholder="Cuéntanos brevemente tu situación actual..."
+                                />
+                            </div>
+
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                size="xl"
+                                className="w-full"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Enviando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Agendar mi consultoría gratuita
+                                        <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
+                            </Button>
+                        </form>
                     </Card>
                 </motion.div>
 
