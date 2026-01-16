@@ -27,18 +27,18 @@ export async function POST(request: Request) {
 
         // 2. Crear Lead en ERPNext
         // Mapeamos los campos del formulario a los campos de ERPNext
-        // Nota: 'custom_fields' depende de lo que tengas configurado. 
-        // Usaremos notas para lo que no calce directo por seguridad.
         const leadData = {
             lead_name: nombre,
             email_id: email,
             mobile_no: whatsapp,
-            company: "Lumen Creativo", // Ajusta si tu company se llama distinto
+            // company: "Lumen Creativo", 
             status: "Lead",
-            source: "Website",
-            territory: "All Territories", // Valor por defecto seguro
-            title: institucion, // Usamos el campo title para la institución/cargo
+            // source: "Website", // Comentado por error de idioma/link
+            // territory: "All Territories", // Comentado por error de idioma/link
+            title: institucion,
         };
+
+        console.log("📤 Enviando a ERPNext:", JSON.stringify(leadData));
 
         const response = await fetch(`${apiUrl}/api/resource/Lead`, {
             method: "POST",
@@ -50,58 +50,49 @@ export async function POST(request: Request) {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Error ERPNext Lead:", errorData);
+            const errorText = await response.text();
+            console.error(`❌ Error ERPNext (${response.status}):`, errorText);
+
+            let errorDetails;
+            try {
+                errorDetails = JSON.parse(errorText);
+            } catch (e) {
+                errorDetails = { message: errorText };
+            }
+
             return NextResponse.json(
-                { error: "Error al crear Lead en ERPNext", details: errorData },
+                { error: "Error al crear Lead en ERPNext", details: errorDetails },
                 { status: response.status }
             );
         }
 
         const result = await response.json();
         const leadName = result.data.name;
+        console.log("✅ Lead creado exitosamente:", leadName);
 
         // 3. Agregar Nota con los detalles completos (Necesidad)
-        // ERPNext usa 'Note' o 'Comment' vinculado al doctype
-        const noteContent = `
-      <b>Nueva solicitud desde Web:</b><br>
-      <b>Institución:</b> ${institucion}<br>
-      <b>Necesidad:</b> ${necesidad}<br>
-    `;
-
-        const noteResponse = await fetch(`${apiUrl}/api/resource/Note`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `token ${apiKey}:${apiSecret}`,
-            },
-            body: JSON.stringify({
-                title: `Mensaje de ${nombre}`,
-                content: noteContent,
-                public: 0,
-                // Relación con el Lead (depende de la versión, a veces se usa Links)
-            })
-        });
-
-        // Alternativa más robusta: Crear un Comentario en el Lead
-        await fetch(`${apiUrl}/api/resource/Comment`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `token ${apiKey}:${apiSecret}`,
-            },
-            body: JSON.stringify({
-                reference_doctype: "Lead",
-                reference_name: leadName,
-                content: `Institución: ${institucion} \nNecesidad: ${necesidad}`,
-                comment_type: "Comment",
-            })
-        });
+        try {
+            await fetch(`${apiUrl}/api/resource/Comment`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `token ${apiKey}:${apiSecret}`,
+                },
+                body: JSON.stringify({
+                    reference_doctype: "Lead",
+                    reference_name: leadName,
+                    content: `Institución: ${institucion} \nNecesidad: ${necesidad}`,
+                    comment_type: "Comment",
+                })
+            });
+        } catch (noteError) {
+            console.warn("⚠️ No se pudo crear la nota, pero el lead sí se creó:", noteError);
+        }
 
         return NextResponse.json({ success: true, lead: leadName });
 
     } catch (error) {
-        console.error("Error general API:", error);
+        console.error("❌ Error CRÍTICO en API Route:", error);
         return NextResponse.json(
             { error: "Error interno del servidor" },
             { status: 500 }

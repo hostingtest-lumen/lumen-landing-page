@@ -37,13 +37,17 @@ export default function CTAFinal() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "Error al enviar formulario");
+                const errorMessage = data.details
+                    ? JSON.stringify(data.details)
+                    : (data.error || "Error al enviar formulario");
+                throw new Error(errorMessage);
             }
 
             setIsSubmitted(true);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error enviando formulario:", error);
-            alert("Hubo un error al enviar tu mensaje. Por favor intenta de nuevo.");
+            // Mostrar el error real al usuario para depurar
+            alert(`Error del sistema: ${error.message}`);
         } finally {
             setIsSubmitting(false);
         }
