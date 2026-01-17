@@ -7,9 +7,18 @@ export async function GET() {
         const cookieStore = await cookies();
         const sessionCookie = cookieStore.get("lumen_session");
 
+        // allow mock mode even without session for ease of testing if desired, or keep auth
+        // Keeping auth for consistency
         if (!sessionCookie) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        // --- MOCK MODE ---
+        if (process.env.MOCK_ERPNEXT === 'true') {
+            const { MOCK_LEADS } = await import("@/lib/mock-data");
+            return NextResponse.json({ leads: MOCK_LEADS });
+        }
+        // -----------------
 
         // Optional: Parse session if needed, but existence of cookie + middleware protection is enough for read
         // const session = JSON.parse(sessionCookie.value);

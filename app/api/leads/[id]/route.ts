@@ -16,6 +16,24 @@ export async function GET(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // --- MOCK MODE ---
+        if (process.env.MOCK_ERPNEXT === 'true') {
+            const { MOCK_LEAD_DETAILS, MOCK_TIMELINE } = await import("@/lib/mock-data");
+            // Return either specific mock detail or default fallback + timeline
+            // Since we only possess a partial map, we'll try to find it or return a generic one
+            const detail = MOCK_LEAD_DETAILS[id as keyof typeof MOCK_LEAD_DETAILS] || {
+                ...MOCK_LEAD_DETAILS["LEAD-00001"],
+                name: id,
+                lead_name: "Mock Lead " + id
+            };
+
+            return NextResponse.json({
+                lead: detail,
+                timeline: MOCK_TIMELINE
+            });
+        }
+        // -----------------
+
         // 2. Config
         const apiUrl = process.env.ERPNEXT_URL;
         const apiKey = process.env.ERPNEXT_API_KEY;

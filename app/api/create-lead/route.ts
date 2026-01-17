@@ -13,6 +13,15 @@ export async function POST(request: Request) {
             );
         }
 
+        // --- MOCK MODE ---
+        if (process.env.MOCK_ERPNEXT === 'true') {
+            console.log("Mock Mode: Lead creation simulated for", email);
+            // Simulate delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+            return NextResponse.json({ success: true, lead: "MOCK-LEAD-" + Date.now() });
+        }
+        // -----------------
+
         const apiUrl = process.env.ERPNEXT_URL;
         const apiKey = process.env.ERPNEXT_API_KEY;
         const apiSecret = process.env.ERPNEXT_API_SECRET;
