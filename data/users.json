@@ -1,10 +1,26 @@
 [
-    {
-        "id": "1",
-        "name": "Kevin Flores",
-        "username": "KevinLumen",
-        "password": "Kevin.123",
-        "role": "admin",
-        "avatar": "KF"
-    }
+  {
+    "id": "1",
+    "name": "Kevin Flores",
+    "username": "KevinLumen",
+    "password": "Kevin.123",
+    "role": "admin",
+    "avatar": "KF"
+  },
+  {
+    "id": "1768541677113",
+    "name": "Oskaryna Campoy",
+    "username": "Oskaryna",
+    "password": "Oskaryna.123",
+    "role": "admin",
+    "avatar": "OC"
+  },
+  {
+    "id": "1768542175761",
+    "name": "Test",
+    "username": "Test",
+    "password": "test",
+    "role": "team",
+    "avatar": "T"
+  }
 ]
