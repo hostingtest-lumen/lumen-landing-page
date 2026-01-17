@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import KanbanBoard from "@/components/team/KanbanBoard"; // Ajusta la ruta si es necesario
+import KanbanBoard from "@/components/crm/KanbanBoard"; // Ajusta la ruta si es necesario
 
 export default function LeadsPage() {
     // Definimos estados iniciales vacíos para que TypeScript no de error
@@ -9,8 +9,8 @@ export default function LeadsPage() {
     const [leads, setLeads] = useState([]);
 
     // Funciones temporales (Placeholders)
-    const handleLeadUpdate = async (leadId: string, newStatus: string) => {
-        console.log("Actualización temporal:", leadId, newStatus);
+    const handleLeadUpdate = async (updatedLead: any) => {
+        console.log("Actualización temporal:", updatedLead);
     };
 
     const handleLeadClick = (lead: any) => {
