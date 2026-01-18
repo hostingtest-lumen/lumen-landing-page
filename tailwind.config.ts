@@ -94,4 +94,4 @@ const config: Config = {
     plugins: [],
 }
 export default config
->>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6
+

@@ -114,7 +114,7 @@ export async function POST(
         };
 
         // 4. Create Communication (Note) in ERPNext
-        // mapping to "Communication" Doctype or "Note" Doctype. 
+        // mapping to "Communication" Doctype or "Note" Doctype.
         // Using "Communication" as it's the standard feed item.
         const newCommunication = {
             subject: "Nota Interna",
@@ -148,4 +148,3 @@ export async function POST(
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
->>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6

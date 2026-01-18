@@ -76,4 +76,4 @@ export const LEAD_STATUSES = [
     { id: "Interested", title: "Interesados", color: "bg-green-50", textColor: "text-green-700" },
     { id: "Lost Lead", title: "Perdidos", color: "bg-red-50", textColor: "text-red-700" },
 ];
->>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6
+

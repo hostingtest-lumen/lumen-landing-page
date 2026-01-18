@@ -149,5 +149,4 @@ export async function GET(
         console.error("API Lead Detail Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
-}
->>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6
+

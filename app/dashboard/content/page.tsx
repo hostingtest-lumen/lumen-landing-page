@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 "use client";
 
 import { useState } from "react";
@@ -206,10 +205,10 @@ export default function ContentPage() {
                                     key={day}
                                     onClick={() => setSelectedDate(isSelected ? null : dateStr)}
                                     className={`aspect-square p-1 rounded-xl transition-all relative ${isToday(day)
-                                            ? "bg-lumen-structure text-white"
-                                            : isSelected
-                                                ? "bg-lumen-creative/10 ring-2 ring-lumen-creative"
-                                                : "hover:bg-gray-50"
+                                        ? "bg-lumen-structure text-white"
+                                        : isSelected
+                                            ? "bg-lumen-creative/10 ring-2 ring-lumen-creative"
+                                            : "hover:bg-gray-50"
                                         }`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -225,10 +224,10 @@ export default function ContentPage() {
                                                 <div
                                                     key={i}
                                                     className={`w-1.5 h-1.5 rounded-full ${c.platform === "instagram"
-                                                            ? "bg-pink-500"
-                                                            : c.platform === "facebook"
-                                                                ? "bg-blue-500"
-                                                                : "bg-purple-500"
+                                                        ? "bg-pink-500"
+                                                        : c.platform === "facebook"
+                                                            ? "bg-blue-500"
+                                                            : "bg-purple-500"
                                                         }`}
                                                 />
                                             ))}
@@ -283,8 +282,8 @@ export default function ContentPage() {
                                             <div className="flex items-start justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <PlatformIcon className={`w-4 h-4 ${item.platform === "instagram"
-                                                            ? "text-pink-500"
-                                                            : "text-blue-500"
+                                                        ? "text-pink-500"
+                                                        : "text-blue-500"
                                                         }`} />
                                                     <span className="font-medium text-gray-900">{item.title}</span>
                                                 </div>
@@ -335,17 +334,3 @@ export default function ContentPage() {
         </div>
     );
 }
-=======
-export default function ContentPage() {
-    return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Contenido</h1>
-            <div className="p-10 text-center bg-white border border-gray-100 rounded-xl">
-                <span className="text-4xl">📅</span>
-                <h3 className="mt-4 text-lg font-medium">Calendario Unificado</h3>
-                <p className="text-gray-500">Aquí vivirán los calendarios editoriales.</p>
-            </div>
-        </div>
-    );
-}
->>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6
