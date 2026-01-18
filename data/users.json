@@ -22,6 +22,7 @@
     "password": "test",
     "role": "team",
     "avatar": "T"
+<<<<<<< HEAD
   },
   {
     "id": "1768709474078",
@@ -30,5 +31,7 @@
     "password": "test",
     "role": "team",
     "avatar": "U"
+=======
+>>>>>>> 7c3690804323f33b4dd3967a201b1c7055721df6
   }
 ]
