@@ -10,7 +10,7 @@ const MENU_ITEMS = [
     { name: "Leads (CRM)", icon: Users, href: "/dashboard/leads" },
     { name: "Contenido", icon: FileText, href: "/dashboard/content" },
     { name: "Tareas", icon: CheckSquare, href: "/dashboard/tasks" },
-    { name: "Admin", icon: Settings, href: "/dashboard/admin/users", role: "admin" }, // Corrected path
+    { name: "Admin", icon: Settings, href: "/dashboard/admin/users", role: "admin" },
 ];
 
 export default function DashboardLayout({
@@ -21,8 +21,10 @@ export default function DashboardLayout({
     const pathname = usePathname();
 
     const handleLogout = () => {
-        document.cookie = "lumen_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        window.location.href = "/login";
+         // Clear both possible cookies just in case
+         document.cookie = "lumen_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
+         document.cookie = "team_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; 
+         window.location.href = "/login";
     };
 
     return (
@@ -43,10 +45,11 @@ export default function DashboardLayout({
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${isActive
-                                    ? "bg-lumen-structure text-white shadow-md shadow-lumen-structure/20"
+                                className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all ${
+                                    isActive 
+                                    ? "bg-lumen-structure text-white shadow-md shadow-lumen-structure/20" 
                                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                                    }`}
+                                }`}
                             >
                                 <item.icon className="w-5 h-5" />
                                 {item.name}
