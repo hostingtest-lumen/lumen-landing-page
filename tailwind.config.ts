@@ -10,11 +10,19 @@ const config: Config = {
         extend: {
             colors: {
                 lumen: {
-                    'clarity': '#F5F5F5',      // Claridad, aire, luz
-                    'structure': '#212121',    // Estructura, sobriedad
-                    'creative': '#00838F',     // Creatividad confiable
-                    'vision': '#1A237E',       // Profundidad, visión
-                    'energy': '#F7931E',       // Energía, acción
+                    // Brand Colors
+                    'priority': '#F7931E',     // [Naranja] Principal: Botones, Acciones, Highlights
+                    'primary': '#F7931E',
+
+                    'vision': '#1A237E',       // [Azul Profundo] Texto corporativo, Headers sutiles
+                    'soul': '#00838F',         // [Cyan] Detalles
+
+                    // Neutrals (Semantic names for Clean UI)
+                    'base': '#FFFFFF',         // Fondo principal
+                    'light': '#F9FAFB',        // Fondo secundario (Gray 50)
+                    'text': '#111827',         // Texto principal (Gray 900)
+                    'muted': '#6B7280',        // Texto secundario (Gray 500)
+                    'border': '#E5E7EB',       // Bordes (Gray 200)
                 },
             },
             fontFamily: {

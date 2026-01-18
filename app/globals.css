@@ -8,12 +8,12 @@
   --color-lumen-creative: #00838F;
   --color-lumen-vision: #1A237E;
   --color-lumen-energy: #F7931E;
-  
+
   /* Font Families */
   --font-serif: var(--font-serif), ui-serif, Georgia, serif;
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display), ui-serif, Georgia, serif;
-  
+
   /* Animations */
   --animate-fade-in: fadeIn 0.6s ease-in-out;
   --animate-slide-up: slideUp 0.8s ease-out;
@@ -21,13 +21,25 @@
 
 /* ===== KEYFRAMES ===== */
 @keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  0% { transform: translateY(20px); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ===== BASE STYLES ===== */
@@ -36,8 +48,8 @@ html {
 }
 
 body {
-  background-color: #F5F5F5;
-  color: var(--color-lumen-structure);
+  background-color: #F9FAFB;
+  color: #111827;
   font-family: var(--font-sans);
   line-height: 1.6;
 }
@@ -64,9 +76,17 @@ h3 {
 }
 
 @media (max-width: 768px) {
-  h1 { font-size: 2.5rem; }
-  h2 { font-size: 2rem; }
-  h3 { font-size: 1.5rem; }
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
 }
 
 /* ===== SECTION SPACING (Catedral Digital) ===== */

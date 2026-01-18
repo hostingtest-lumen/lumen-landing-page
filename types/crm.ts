@@ -18,3 +18,39 @@ export const LEAD_STATUSES = [
     { id: "Interested", title: "Interesados", color: "bg-green-50", textColor: "text-green-700" },
     { id: "Lost Lead", title: "Perdidos", color: "bg-red-50", textColor: "text-red-700" },
 ];
+
+// Task Management
+export interface Task {
+    id: string;
+    title: string;
+    description?: string;
+    status: 'Open' | 'Working' | 'Pending Review' | 'Completed' | 'Cancelled';
+    priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+    dueDate?: string;
+    assignedTo?: string;
+    tags?: string[];
+    project?: string;
+    subtasks?: Subtask[];
+    attachments?: Attachment[];
+}
+
+export interface Subtask {
+    id: string;
+    title: string;
+    completed: boolean;
+}
+
+export interface Comment {
+    id: string;
+    content: string;
+    author: string;
+    createdAt: string;
+}
+
+export interface Attachment {
+    id: string;
+    fileName: string;
+    fileUrl: string;
+    uploadedBy: string;
+    uploadedAt: string;
+}

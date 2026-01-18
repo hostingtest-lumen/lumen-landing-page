@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendTeamNotificationEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
     try {
@@ -155,6 +156,27 @@ ${necesidad}
             console.log("ℹ️ Credenciales de Telegram no configuradas, saltando notificación.");
         }
 
+        // 6. EMAIL: Enviar notificación al equipo
+        // NOTA: El email de confirmación al lead se manejará con n8n en el futuro
+        const emailData = {
+            nombre,
+            email,
+            whatsapp,
+            institucion,
+            instagram: body.instagram,
+            necesidad,
+            leadId: leadName,
+        };
+
+        // Enviar solo email al equipo (el email al lead requiere dominio verificado en Resend)
+        sendTeamNotificationEmail(emailData).then((result) => {
+            if (result.success) {
+                console.log("✅ Email de notificación enviado al equipo");
+            } else {
+                console.error("❌ Error enviando email al equipo:", result.error);
+            }
+        });
+
         return NextResponse.json({ success: true, lead: leadName });
 
     } catch (error) {
@@ -165,3 +187,4 @@ ${necesidad}
         );
     }
 }
+

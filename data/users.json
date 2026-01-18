@@ -22,5 +22,13 @@
     "password": "test",
     "role": "team",
     "avatar": "T"
+  },
+  {
+    "id": "1768709474078",
+    "name": "Usuariotest",
+    "username": "Usuariotest",
+    "password": "test",
+    "role": "team",
+    "avatar": "U"
   }
 ]

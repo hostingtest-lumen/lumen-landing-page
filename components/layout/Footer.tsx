@@ -74,7 +74,7 @@ export default function Footer() {
                         <h4 className="font-semibold text-lg">Síguenos</h4>
                         <div className="flex gap-4">
                             <a
-                                href="https://instagram.com/lumencreativo"
+                                href="https://instagram.com/lumencreativo.lat"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-lumen-energy transition-colors"
@@ -82,7 +82,7 @@ export default function Footer() {
                                 <Instagram className="w-5 h-5" />
                             </a>
                             <a
-                                href="https://facebook.com/lumencreativo"
+                                href="https://facebook.com/lumencreativo.lat"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-lumen-energy transition-colors"
