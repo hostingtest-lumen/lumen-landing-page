@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link as LinkIcon, Building2, ExternalLink, RefreshCw, Plus, Loader2, Instagram, Phone, Briefcase, X, Pencil, Trash2 } from "lucide-react";
 import { Client } from "@/types/clients";
-import { clientService } from "@/lib/clients";
 import Link from "next/link";
 
 export default function ClientsAdminPage() {
@@ -48,7 +47,7 @@ export default function ClientsAdminPage() {
     };
 
     const handleOpenEdit = (client: Client) => {
-        setEditingId(client.id);
+        setEditingId(client.erpId); // Use erpId for editing
         setFormData({
             name: client.name,
             instagram: client.instagram || "",
@@ -64,7 +63,7 @@ export default function ClientsAdminPage() {
         setIsSaving(true);
         try {
             const method = editingId ? 'PUT' : 'POST';
-            const body = editingId ? { id: editingId, ...formData } : formData;
+            const body = editingId ? { erpId: editingId, ...formData } : formData;
 
             const res = await fetch('/api/clients', {
                 method: method,
@@ -75,24 +74,12 @@ export default function ClientsAdminPage() {
             if (res.ok) {
                 const data = await res.json();
 
-                // Sync to localStorage
-                if (data.client) {
-                    // If editing, we might need a distinct update method in clientService, 
-                    // but 'add' overwrites if we implement it correctly or we can just re-sync all.
-                    // For now, let's just re-fetch or update list manually.
-
-                    // Actually, clientService.add just prepends. 
-                    // Ideally we should have clientService.update or just reload from API.
-                }
-
                 if (editingId) {
-                    setClients(clients.map(c => c.id === editingId ? data.client : c));
-                    alert("✅ Cliente actualizado correctamente");
+                    setClients(clients.map(c => c.erpId === editingId ? data.client : c));
+                    alert("✅ Cliente actualizado correctamente en ERPNext");
                 } else {
                     setClients([data.client, ...clients]);
-                    clientService.add(data.client); // Keep syncing new ones for now
-                    const erpStatus = data.erpCreated ? "✅ Registrado en ERPNext" : "⚠️ Solo local (ERPNext no disponible)";
-                    alert(`🎉 ¡Cliente creado! Notificación enviada.\n\n${erpStatus}`);
+                    alert(`🎉 ¡Cliente creado en ERPNext!\n\nNotificación enviada al equipo.`);
                 }
 
                 setShowForm(false);
@@ -108,18 +95,21 @@ export default function ClientsAdminPage() {
         }
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!window.confirm(`¿Estás seguro que deseas eliminar a ${name}?\nEsta acción no se puede deshacer.`)) return;
+    const handleDelete = async (erpId: string, name: string) => {
+        if (!window.confirm(`¿Estás seguro que deseas eliminar a ${name}?\n\n⚠️ Esto eliminará el cliente de ERPNext permanentemente.`)) return;
 
         try {
-            const res = await fetch(`/api/clients?id=${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/clients?erpId=${encodeURIComponent(erpId)}`, { method: 'DELETE' });
             if (res.ok) {
-                setClients(clients.filter(c => c.id !== id));
+                setClients(clients.filter(c => c.erpId !== erpId));
+                alert("✅ Cliente eliminado de ERPNext");
             } else {
-                alert("Error al eliminar cliente");
+                const error = await res.json();
+                alert(`Error al eliminar: ${error.error || 'Error desconocido'}`);
             }
         } catch (error) {
             console.error("Error deleting:", error);
+            alert("Error de conexión al eliminar cliente");
         }
     };
 
@@ -323,7 +313,7 @@ export default function ClientsAdminPage() {
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            onClick={() => handleDelete(client.id, client.name)}
+                                            onClick={() => handleDelete(client.erpId, client.name)}
                                             title="Eliminar Cliente"
                                         >
                                             <Trash2 className="w-4 h-4 text-red-500" />

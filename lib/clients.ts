@@ -1,57 +1,80 @@
 "use client";
 
-import { Client, SEED_CLIENTS } from "@/types/clients";
+import { Client } from "@/types/clients";
 
-const STORAGE_KEY = 'lumen_clients_v1';
-
-// Client Service with localStorage persistence (MVP)
-// Will be replaced with API calls in production
+// Client Service - fetches from API which connects to ERPNext
 export const clientService = {
-    getAll: (): Client[] => {
-        if (typeof window === 'undefined') return SEED_CLIENTS;
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) {
-                // Initialize with seed data
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_CLIENTS));
-                return SEED_CLIENTS;
-            }
-            return JSON.parse(stored);
-        } catch (e) {
-            console.error("Error reading clients", e);
-            return SEED_CLIENTS;
-        }
-    },
-
-    getById: (id: string): Client | undefined => {
-        const all = clientService.getAll();
-        return all.find(c => c.id === id);
-    },
-
-    getByToken: (token: string): Client | undefined => {
-        const all = clientService.getAll();
-        return all.find(c => c.token === token);
-    },
-
-    add: (client: Client): void => {
-        const all = clientService.getAll();
-        const updated = [client, ...all];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    },
-
-    // Sync from API (call after creating via API)
-    syncFromAPI: async (): Promise<Client[]> => {
+    getAll: async (): Promise<Client[]> => {
         try {
             const res = await fetch('/api/clients');
             if (res.ok) {
                 const data = await res.json();
-                const clients = data.clients || [];
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
-                return clients;
+                return data.clients || [];
             }
         } catch (e) {
-            console.error("Failed to sync clients from API", e);
+            console.error("Error fetching clients", e);
         }
-        return clientService.getAll();
+        return [];
+    },
+
+    getById: async (id: string): Promise<Client | undefined> => {
+        const all = await clientService.getAll();
+        return all.find(c => c.id === id);
+    },
+
+    getByErpId: async (erpId: string): Promise<Client | undefined> => {
+        const all = await clientService.getAll();
+        return all.find(c => c.erpId === erpId);
+    },
+
+    getByToken: async (token: string): Promise<Client | undefined> => {
+        const all = await clientService.getAll();
+        return all.find(c => c.token === token);
+    },
+
+    create: async (clientData: Partial<Client>): Promise<Client | null> => {
+        try {
+            const res = await fetch('/api/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(clientData)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                return data.client || null;
+            }
+        } catch (e) {
+            console.error("Error creating client", e);
+        }
+        return null;
+    },
+
+    update: async (erpId: string, clientData: Partial<Client>): Promise<Client | null> => {
+        try {
+            const res = await fetch('/api/clients', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ erpId, ...clientData })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                return data.client || null;
+            }
+        } catch (e) {
+            console.error("Error updating client", e);
+        }
+        return null;
+    },
+
+    delete: async (erpId: string): Promise<boolean> => {
+        try {
+            const res = await fetch(`/api/clients?erpId=${encodeURIComponent(erpId)}`, {
+                method: 'DELETE'
+            });
+            return res.ok;
+        } catch (e) {
+            console.error("Error deleting client", e);
+        }
+        return false;
     }
 };
