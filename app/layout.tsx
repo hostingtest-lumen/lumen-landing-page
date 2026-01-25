@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter, Cinzel } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import MatomoTracker from "@/components/analytics/MatomoTracker";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -42,8 +44,15 @@ export default function RootLayout({
         inter.variable,
         cinzel.variable
       )}>
-        {children}
+        <MatomoTracker
+          siteId={process.env.NEXT_PUBLIC_MATOMO_SITE_ID || ""}
+          matomoUrl={process.env.NEXT_PUBLIC_MATOMO_URL || ""}
+        />
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
 }
+

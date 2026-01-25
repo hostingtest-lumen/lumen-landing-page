@@ -51,8 +51,7 @@ const getContext = () => {
         baseUrl: env.ERPNEXT_URL,
         headers: {
             'Authorization': `token ${env.ERPNEXT_API_KEY}:${env.ERPNEXT_API_SECRET}`,
-            'Content-Type': 'application/json',
-            'Expect': ''
+            'Content-Type': 'application/json'
         }
     };
 };

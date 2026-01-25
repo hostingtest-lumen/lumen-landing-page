@@ -10,6 +10,8 @@ export interface ContentGridItem {
     type: ContentType;
     concept: string;
     caption?: string;
+    instructions?: string;
+    assets?: string[]; // URLs of uploaded files
     status: GridStatus;
     notes?: string;
 }

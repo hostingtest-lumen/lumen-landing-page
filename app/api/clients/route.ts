@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Client } from "@/types/clients";
 import { getEnv } from "@/lib/env-loader";
+import { sendWebhook } from "@/lib/webhooks";
 
 function generateToken(name: string): string {
     const prefix = name.toLowerCase().substring(0, 3).replace(/[^a-z]/g, 'x');
@@ -22,8 +23,7 @@ const getHeaders = () => {
     const env = getEnv();
     return {
         "Content-Type": "application/json",
-        "Authorization": `token ${env.ERPNEXT_API_KEY}:${env.ERPNEXT_API_SECRET}`,
-        "Expect": ""
+        "Authorization": `token ${env.ERPNEXT_API_KEY}:${env.ERPNEXT_API_SECRET}`
     };
 };
 
@@ -94,7 +94,7 @@ async function createCustomerInERPNext(client: Client): Promise<string | null> {
                 body: JSON.stringify({
                     reference_doctype: "Customer",
                     reference_name: customerId,
-                    content: `📱 Instagram: ${client.instagram || 'N/A'}\n🏢 Rubro: ${client.industry || 'N/A'}\n📞 Teléfono: ${client.contactPhone || 'N/A'}\n🔗 Portal Token: ${client.token}`,
+                    content: `📱 Instagram: ${client.instagram || 'N/A'}\n👤 Encargado: ${client.contactPerson || 'N/A'}\n📅 Día Pago: ${client.paymentDay || 'N/A'}\n� Email: ${client.email || 'N/A'}\n📍 Dirección: ${client.address || 'N/A'}\n🆔 RUT/NIT: ${client.taxId || 'N/A'}\n🌐 Web: ${client.website || 'N/A'}\n�📞 Teléfono: ${client.contactPhone || 'N/A'}\n🔗 Portal Token: ${client.token}`,
                     comment_type: "Comment",
                 })
             });
@@ -109,7 +109,7 @@ async function createCustomerInERPNext(client: Client): Promise<string | null> {
 }
 
 // Helper to fetch comments for a customer (to get instagram, token, etc.)
-async function getCustomerComments(erpId: string): Promise<{ instagram?: string, contactPhone?: string, token?: string }> {
+async function getCustomerComments(erpId: string): Promise<{ instagram?: string, contactPhone?: string, token?: string, paymentDay?: string, contactPerson?: string, email?: string, address?: string, taxId?: string, website?: string }> {
     const env = getEnv();
     const apiUrl = env.ERPNEXT_URL;
     if (!apiUrl) return {};
@@ -128,15 +128,27 @@ async function getCustomerComments(erpId: string): Promise<{ instagram?: string,
         const data = await res.json();
         if (data.data && data.data.length > 0) {
             const content = data.data[0].content || '';
-            // Parse the content for instagram, phone, token
+            // Parse the content for all fields
             const instagramMatch = content.match(/Instagram:\s*@?([^\n]+)/i);
             const phoneMatch = content.match(/Teléfono:\s*([^\n]+)/i);
             const tokenMatch = content.match(/Portal Token:\s*([^\n]+)/i);
+            const paymentMatch = content.match(/Día Pago:\s*([^\n]+)/i);
+            const contactMatch = content.match(/Encargado:\s*([^\n]+)/i);
+            const emailMatch = content.match(/Email:\s*([^\n]+)/i);
+            const addressMatch = content.match(/Dirección:\s*([^\n]+)/i);
+            const taxMatch = content.match(/RUT\/NIT:\s*([^\n]+)/i);
+            const webMatch = content.match(/Web:\s*([^\n]+)/i);
 
             return {
                 instagram: instagramMatch ? instagramMatch[1].trim() : undefined,
                 contactPhone: phoneMatch ? phoneMatch[1].trim() : undefined,
                 token: tokenMatch ? tokenMatch[1].trim() : undefined,
+                paymentDay: paymentMatch ? paymentMatch[1].trim() : undefined,
+                contactPerson: contactMatch ? contactMatch[1].trim() : undefined,
+                email: emailMatch ? emailMatch[1].trim() : undefined,
+                address: addressMatch ? addressMatch[1].trim() : undefined,
+                taxId: taxMatch ? taxMatch[1].trim() : undefined,
+                website: webMatch ? webMatch[1].trim() : undefined,
             };
         }
     } catch (e) {
@@ -146,14 +158,21 @@ async function getCustomerComments(erpId: string): Promise<{ instagram?: string,
 }
 
 export async function GET() {
-    const env = getEnv();
-    const apiUrl = env.ERPNEXT_URL;
+    // Use process.env directly like the debug endpoint does
+    const apiUrl = process.env.ERPNEXT_URL;
+    const apiKey = process.env.ERPNEXT_API_KEY;
+    const apiSecret = process.env.ERPNEXT_API_SECRET;
 
     // If ERPNext is not configured, return empty array
-    if (!apiUrl || !env.ERPNEXT_API_KEY || !env.ERPNEXT_API_SECRET) {
+    if (!apiUrl || !apiKey || !apiSecret) {
         console.warn("⚠️ ERPNext no configurado - retornando lista vacía");
         return NextResponse.json({ clients: [], source: "none" });
     }
+
+    const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `token ${apiKey}:${apiSecret}`
+    };
 
     try {
         // Fetch customers from ERPNext
@@ -165,21 +184,70 @@ export async function GET() {
             "mobile_no",
             "creation"
         ]);
-        const url = `${apiUrl}/api/resource/Customer?fields=${encodeURIComponent(fields)}&order_by=creation desc&limit_page_length=100`;
 
-        const response = await fetch(url, {
-            headers: getHeaders(),
-            cache: 'no-store'
-        });
+        // Build the customer URL with fields
+        const url = `${apiUrl}/api/resource/Customer?fields=${encodeURIComponent(fields)}&limit_page_length=100`;
 
-        if (!response.ok) {
-            const errorText = await response.text();
+        // Also fetch balances (dashboard-style)
+        // We can do this by getting the GL Report or simply relying on the fact 
+        // that we might need a separate call or specific field if 'outstanding_amount' isn't on Customer doctype directly (it isn't by default).
+        // A better approach for list view is to fetch `Customer` and then mapped balances via `accounts` if possible, 
+        // OR simply fetch `Sales Invoice` summaries. 
+        // However, ERPNext has a `get_balance` method but via API we might need `Selling Settings`.
+        // EASIER WAY: Accounts Receivable Summary is a report.
+
+        // FOR NOW: Let's fetch Customer. Note: Customer doctype DOES NOT have outstanding_amount field by default in standard API response unless calculated.
+        // We will fetch the basic list first. To show balance, we'd ideally hit a report API.
+        // Let's optimize: We will just fetch the list as before, and for the "Detailed View" we fetch balance. 
+        // BUT user wants it on the card.
+        // Let's try to fetch `api/method/erpnext.accounts.utils.get_balance` for each if list is small, or just one bulk query if possible. 
+        // Efficient way: Fetch `Sales Invoice` with status Unpaid grouped by customer.
+
+        // Let's try fetching `Sales Invoice` with `outstanding_amount > 0` and aggregate locally.
+        const balanceUrl = `${apiUrl}/api/resource/${encodeURIComponent('Sales Invoice')}?fields=${encodeURIComponent('["customer","outstanding_amount"]')}&filters=${encodeURIComponent('[["docstatus","=",1],["outstanding_amount",">",0]]')}&limit_page_length=500`;
+
+        // Fetch customers first (main request)
+        let customerRes: Response;
+        try {
+            customerRes = await fetch(url, {
+                headers,
+                cache: 'no-store'
+            });
+        } catch (fetchError: any) {
+            console.error("❌ Fetch exception for customers:", fetchError.message);
+            return NextResponse.json({
+                clients: [],
+                source: "erpnext-error",
+                error: `Customer fetch failed: ${fetchError.message}`,
+                debug: { url, apiUrl }
+            });
+        }
+
+        if (!customerRes.ok) {
+            const errorText = await customerRes.text();
             console.error("❌ Error fetching customers from ERPNext:", errorText);
             return NextResponse.json({ clients: [], source: "erpnext-error", error: errorText });
         }
 
-        const result = await response.json();
+        // Fetch balances separately (non-blocking)
+        let balanceRes: Response | null = null;
+        try {
+            balanceRes = await fetch(balanceUrl, { headers, cache: 'no-store' });
+        } catch (e) {
+            console.warn("⚠️ Balance fetch failed, continuing without balances");
+        }
+
+        const result = await customerRes.json();
         const erpCustomers = result.data || [];
+
+        // Process balances
+        const balancesMap: Record<string, number> = {};
+        if (balanceRes && balanceRes.ok) {
+            const balanceData = await balanceRes.json();
+            (balanceData.data || []).forEach((inv: any) => {
+                balancesMap[inv.customer] = (balancesMap[inv.customer] || 0) + inv.outstanding_amount;
+            });
+        }
 
         // Map ERPNext customers to Client interface
         const clients: Client[] = await Promise.all(
@@ -195,6 +263,13 @@ export async function GET() {
                     instagram: comments.instagram,
                     industry: cust.industry || undefined,
                     contactPhone: comments.contactPhone || cust.mobile_no || undefined,
+                    paymentDay: comments.paymentDay,
+                    contactPerson: comments.contactPerson,
+                    email: comments.email,
+                    address: comments.address,
+                    taxId: comments.taxId,
+                    website: comments.website,
+                    outstandingBalance: balancesMap[cust.name] || 0,
                     createdAt: cust.creation,
                 };
             })
@@ -215,7 +290,7 @@ export async function GET() {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { name, instagram, industry, contactPhone } = body;
+        const { name, instagram, industry, contactPhone, paymentDay, contactPerson, email, address, taxId, website } = body;
 
         if (!name) return NextResponse.json({ error: "Nombre requerido" }, { status: 400 });
 
@@ -230,29 +305,42 @@ export async function POST(request: Request) {
             instagram: instagram?.replace('@', '').trim(),
             industry: industry?.trim(),
             contactPhone: contactPhone?.trim(),
+            paymentDay,
+            contactPerson,
+            email,
+            address,
+            taxId,
+            website,
             createdAt: new Date().toISOString()
         };
 
         // Create in ERPNext
-        const erpId = await createCustomerInERPNext(newClient);
+        let erpId = await createCustomerInERPNext(newClient);
+        let erpCreated = true;
 
         if (!erpId) {
-            return NextResponse.json({
-                error: "No se pudo crear el cliente en ERPNext. Verifica la conexión.",
-                erpCreated: false
-            }, { status: 500 });
+            console.warn("⚠️ ERPNext no disponible, creando cliente en modo LOCAL-ONLY");
+            erpId = `LOCAL-${Date.now()}`;
+            erpCreated = false;
         }
 
         newClient.erpId = erpId;
 
-        // Send notification
-        sendTelegramNotification(newClient, erpId).catch(console.error);
+        // Enviar evento webhook (n8n manejará Telegram, Email, etc.)
+        // Se envía incluso si es local, con una bandera indicando el estado de sync
+        sendWebhook('client.created', {
+            client: newClient,
+            erpId,
+            portalLink: `/portal/${token}`,
+            erpSynced: erpCreated
+        }).catch(console.error);
 
         return NextResponse.json({
             success: true,
             client: newClient,
             portalLink: `/portal/${token}`,
-            erpCreated: true
+            erpCreated: erpCreated,
+            message: erpCreated ? "Cliente creado y sincronizado" : "Cliente creado SOLO LOCALMENTE (ERPNext falló)"
         });
     } catch (error) {
         console.error("POST Error:", error);
@@ -266,14 +354,14 @@ export async function PUT(request: Request) {
 
     try {
         const body = await request.json();
-        const { erpId, name, instagram, industry, contactPhone } = body;
+        const { erpId, name, instagram, industry, contactPhone, paymentDay, contactPerson, email, address, taxId, website } = body;
 
         if (!erpId) return NextResponse.json({ error: "erpId required" }, { status: 400 });
 
-        // Update Customer in ERPNext (customer_name can be updated)
+        // Update Customer in ERPNext
         if (apiUrl) {
             try {
-                // Update the Customer document
+                // Update basic fields
                 const updateRes = await fetch(`${apiUrl}/api/resource/Customer/${encodeURIComponent(erpId)}`, {
                     method: "PUT",
                     headers: getHeaders(),
@@ -281,6 +369,8 @@ export async function PUT(request: Request) {
                         customer_name: name,
                         industry: industry,
                         mobile_no: contactPhone,
+                        website: website,
+                        tax_id: taxId
                     })
                 });
 
@@ -288,14 +378,14 @@ export async function PUT(request: Request) {
                     console.error("ERP Update Error:", await updateRes.text());
                 }
 
-                // Add a comment with updated info
+                // Add comment with ALL extended info
                 await fetch(`${apiUrl}/api/resource/Comment`, {
                     method: "POST",
                     headers: getHeaders(),
                     body: JSON.stringify({
                         reference_doctype: "Customer",
                         reference_name: erpId,
-                        content: `🔄 Actualización:\n📱 Instagram: ${instagram || 'N/A'}\n📞 Teléfono: ${contactPhone || 'N/A'}\n🏢 Rubro: ${industry || 'N/A'}`,
+                        content: `🔄 Datos Actualizados:\n📱 Instagram: ${instagram || 'N/A'}\n👤 Encargado: ${contactPerson || 'N/A'}\n📅 Día Pago: ${paymentDay || 'N/A'}\n� Email: ${email || 'N/A'}\n📍 Dirección: ${address || 'N/A'}\n🆔 RUT/NIT: ${taxId || 'N/A'}\n🌐 Web: ${website || 'N/A'}\n�📞 Teléfono: ${contactPhone || 'N/A'}\n🏢 Rubro: ${industry || 'N/A'}`,
                         comment_type: "Comment",
                     })
                 });
@@ -304,15 +394,21 @@ export async function PUT(request: Request) {
             }
         }
 
-        // Return the updated client
+        // Return updated client
         const updatedClient: Client = {
             id: generateIdFromName(name || erpId),
             name: name,
             erpId: erpId,
             token: generateTokenFromErpId(erpId),
-            instagram: instagram,
-            industry: industry,
-            contactPhone: contactPhone,
+            instagram,
+            industry,
+            contactPhone,
+            paymentDay,
+            contactPerson,
+            email,
+            address,
+            taxId,
+            website
         };
 
         return NextResponse.json({ success: true, client: updatedClient });

@@ -6,6 +6,16 @@ export interface Lead {
     email_id: string;
     status: string;
     creation: string;
+    // Multi-pipeline support
+    pipelineId?: string;        // Which pipeline this lead belongs to
+    columnId?: string;          // Which column within the pipeline
+    source?: string;            // Lead source (website, referral, etc.)
+    value?: number;             // Estimated deal value
+    assignedTo?: string;        // Team member assigned
+    createdAt?: string;         // ISO date
+    lastContactedAt?: string;   // Last contact date
+    notes?: string;             // Quick notes
+    tags?: string[];            // Tags for filtering
     [key: string]: any;
 }
 

@@ -15,7 +15,8 @@ import {
     Calendar,
     Shield,
     CheckCircle,
-    DollarSign
+    DollarSign,
+    MessageCircle
 } from "lucide-react";
 import { AuthProvider, useAuth } from "@/components/providers/AuthProvider";
 import { UserRole } from "@/types/auth";
@@ -26,12 +27,14 @@ interface MenuItem {
     icon: any;
     href: string;
     roles?: UserRole[]; // If undefined, accessible by all
+    badge?: string; // Optional badge
 }
 
 const MENU_ITEMS_CONFIG: MenuItem[] = [
     { name: 'Inicio', icon: Home, href: '/dashboard' },
     { name: 'Tareas', icon: LayoutList, href: '/dashboard/tasks' },
     { name: 'Aprobaciones', icon: CheckCircle, href: '/dashboard/deliverables' },
+    { name: 'Soporte', icon: MessageCircle, href: '/dashboard/support', roles: ['admin', 'sales', 'strategist'] },
     { name: 'CRM', icon: Users, href: '/dashboard/leads', roles: ['admin', 'sales', 'strategist'] },
     { name: 'Finanzas', icon: DollarSign, href: '/dashboard/finance', roles: ['admin'] },
     { name: 'Calendario', icon: Calendar, href: '/dashboard/calendar' },
@@ -41,10 +44,10 @@ const MENU_ITEMS_CONFIG: MenuItem[] = [
 function DashboardShell({ children }: { children: React.ReactNode }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
-    const { user, isLoading } = useAuth();
+    const { user, isLoading, logout } = useAuth();
 
     const handleLogout = () => {
-        console.log("Logout triggered");
+        logout();
     };
 
     if (isLoading) {

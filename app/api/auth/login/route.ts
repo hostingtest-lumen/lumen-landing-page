@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getUsers } from "@/lib/db";
+import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
     try {
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
         const { username, password } = body;
 
         // 1. Get Users from "DB"
-        const users = await getUsers();
+        const users = db.read<any>('users');
 
         // 2. Validate Credentials
         const user = users.find((u: any) => u.username === username && u.password === password);

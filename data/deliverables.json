@@ -1,0 +1,26 @@
+[
+  {
+    "id": "d-001",
+    "title": "Brand Kit Refresh - V1",
+    "type": "brand",
+    "status": "approved",
+    "priority": "high",
+    "dueDate": "2026-02-15",
+    "client": "Congregación Santa María",
+    "version": "v1",
+    "author": "Kevin Flores",
+    "url": "https://example.com/brand-kit"
+  },
+  {
+    "id": "d-002",
+    "title": "Campaña Vocacional - Reels",
+    "type": "video",
+    "status": "in_review",
+    "priority": "urgent",
+    "dueDate": "2026-01-30",
+    "client": "Seminario Mayor",
+    "version": "v2",
+    "author": "Ana López",
+    "url": "https://example.com/video"
+  }
+]

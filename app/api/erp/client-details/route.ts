@@ -18,8 +18,7 @@ export async function GET(request: Request) {
 
     const headers = {
         'Authorization': `token ${apiKey}:${apiSecret}`,
-        'Content-Type': 'application/json',
-        'Expect': ''
+        'Content-Type': 'application/json'
     };
     const baseUrl = apiUrl;
 

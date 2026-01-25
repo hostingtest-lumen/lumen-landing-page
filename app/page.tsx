@@ -8,6 +8,7 @@ import Process from "@/components/sections/Process";
 import Services from "@/components/sections/Services";
 import FAQ from "@/components/sections/FAQ";
 import CTAFinal from "@/components/sections/CtaFinal";
+import WhatsAppButton from "@/components/ui/WhatsAppButton";
 
 export default function Home() {
   return (
@@ -39,6 +40,10 @@ export default function Home() {
       <CTAFinal />
 
       <Footer />
+
+      {/* WhatsApp Floating Button */}
+      <WhatsAppButton />
     </main>
   );
 }
+

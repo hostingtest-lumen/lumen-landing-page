@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getUsers, addUser } from "@/lib/db";
+import { db } from "@/lib/db";
 import { cookies } from "next/headers";
 
 // Helper to check admin permission
@@ -16,7 +16,7 @@ async function isAdmin() {
 export async function GET() {
     if (!await isAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const users = await getUsers();
+    const users = db.read<any>('users'); // Generic 'users' table
     // Return users without passwords for security
     const safeUsers = users.map(({ password, ...u }: any) => u);
     return NextResponse.json(safeUsers);
@@ -42,7 +42,8 @@ export async function POST(request: Request) {
             avatar: name.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()
         };
 
-        await addUser(newUser);
+        const users = db.read<any>('users');
+        db.write('users', [...users, newUser]);
 
         return NextResponse.json({ success: true, user: newUser });
     } catch (e) {

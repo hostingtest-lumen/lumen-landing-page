@@ -11,6 +11,7 @@ import {
 import { clientService } from "@/lib/clients";
 import { Client } from "@/types/clients";
 import { ContentGridItem, Platform, ContentType, GridStatus } from "@/types/content-grid";
+import ContentCreatorModal from "@/components/dashboard/calendar/ContentCreatorModal";
 
 export default function PlannerPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -31,11 +32,14 @@ export default function PlannerPage() {
 
     useEffect(() => {
         // Load clients initially
-        const allClients = clientService.getAll();
-        setClients(allClients);
-        if (allClients.length > 0) {
-            setSelectedClient(allClients[0].id);
-        }
+        const loadClients = async () => {
+            const allClients = await clientService.getAll();
+            setClients(allClients);
+            if (allClients.length > 0) {
+                setSelectedClient(allClients[0].id);
+            }
+        };
+        loadClients();
     }, []);
 
     useEffect(() => {
@@ -65,8 +69,8 @@ export default function PlannerPage() {
         }
     };
 
-    const handleSave = async () => {
-        if (!newItem.concept || !newItem.date || !selectedClient) {
+    const handleSave = async (itemData: Partial<ContentGridItem>) => {
+        if (!itemData.concept || !itemData.date || !selectedClient) {
             alert("Faltan campos (Concepto, Fecha)");
             return;
         }
@@ -76,7 +80,7 @@ export default function PlannerPage() {
 
         // Prepare Item
         const itemToSave = {
-            ...newItem,
+            ...itemData,
             clientId: erpIdentifier, // Send ERP Name
             // If editing, keep ID
             id: editingItem?.id
@@ -150,57 +154,102 @@ export default function PlannerPage() {
         for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
 
         return (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(year, month - 1, 1))}>
-                            <ChevronLeft className="w-4 h-4" />
-                        </Button>
-                        <h2 className="font-bold text-lg capitalize">
-                            {currentDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden flex flex-col h-full">
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between p-6 bg-white border-b border-gray-100">
+                    <div className="flex items-center gap-4">
+                        <div className="flex gap-1">
+                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="rounded-full w-8 h-8 hover:bg-lumen-clarity border-gray-200">
+                                <ChevronLeft className="w-4 h-4 text-gray-600" />
+                            </Button>
+                            <Button variant="outline" size="icon" onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="rounded-full w-8 h-8 hover:bg-lumen-clarity border-gray-200">
+                                <ChevronRight className="w-4 h-4 text-gray-600" />
+                            </Button>
+                        </div>
+                        <h2 className="text-3xl font-bold capitalize text-gray-900 tracking-wide">
+                            {currentDate.toLocaleString('es-ES', { month: 'long' })} <span className="text-gray-300 text-xl">{year}</span>
                         </h2>
-                        <Button variant="ghost" size="icon" onClick={() => setCurrentDate(new Date(year, month + 1, 1))}>
-                            <ChevronRight className="w-4 h-4" />
-                        </Button>
                     </div>
-                    <Button size="sm" onClick={() => handleOpenCreate()} className="bg-lumen-priority text-white">
+                    <Button onClick={() => handleOpenCreate()} className="bg-gray-900 text-white hover:bg-lumen-priority hover:text-white transition-all rounded-full px-6 shadow-lg shadow-gray-900/20">
                         <Plus className="w-4 h-4 mr-2" />
-                        Nuevo
+                        Crear Contenido
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                    {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
-                        <div key={d} className="py-2 text-center">{d}</div>
+                {/* Days Header */}
+                <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+                    {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map(d => (
+                        <div key={d} className="py-3 text-center text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest font-sans">
+                            {d}
+                        </div>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-7 auto-rows-[120px] divide-x divide-gray-100 divide-y">
+                {/* Grid */}
+                <div className="grid grid-cols-7 flex-1 auto-rows-[minmax(140px,1fr)] divide-x divide-gray-100 divide-y bg-gray-50/10">
                     {days.map((d, i) => {
                         if (!d) return <div key={i} className="bg-gray-50/30" />;
+
                         const dateStr = d.toISOString().split('T')[0];
+                        const isToday = dateStr === new Date().toISOString().split('T')[0];
                         const items = gridItems.filter(x => x.date === dateStr);
 
                         return (
-                            <div key={i} className="p-1 group hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => handleOpenCreate(dateStr)}>
-                                <div className="flex justify-between items-start mb-1 px-1">
-                                    <span className={`text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full ${dateStr === new Date().toISOString().split('T')[0] ? 'bg-lumen-priority text-white' : 'text-gray-700'
-                                        }`}>{d.getDate()}</span>
+                            <div
+                                key={i}
+                                onClick={() => handleOpenCreate(dateStr)}
+                                className={`group relative p-2 transition-all hover:bg-blue-50/20 cursor-pointer flex flex-col gap-2 ${isToday ? 'bg-amber-50/30' : ''}`}
+                            >
+                                {/* Date Number */}
+                                <div className="flex justify-between items-start">
+                                    <span className={`text-sm font-medium w-8 h-8 flex items-center justify-center rounded-full transition-colors
+                                        ${isToday ? 'bg-lumen-priority text-white shadow-md shadow-amber-200 font-bold' : 'text-gray-400 group-hover:text-gray-900 bg-transparent group-hover:bg-white'}
+                                    `}>
+                                        {d.getDate()}
+                                    </span>
+                                    {items.length > 0 && (
+                                        <span className="text-[10px] font-bold text-gray-300 bg-gray-50 px-1.5 rounded-full">{items.length}</span>
+                                    )}
                                 </div>
-                                <div className="space-y-1 overflow-y-auto max-h-[85px] px-1 custom-scrollbar">
+
+                                {/* Items Container */}
+                                <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar">
                                     {items.map(item => (
                                         <div
                                             key={item.id}
                                             onClick={(e) => { e.stopPropagation(); handleOpenEdit(item); }}
-                                            className={`text-[10px] p-1.5 rounded border truncate flex items-center gap-1 cursor-pointer hover:shadow-md transition-all ${item.status === 'approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                    item.status === 'pending_approval' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                                        'bg-white text-gray-600 border-gray-200'
-                                                }`}
+                                            className={`
+                                                relative overflow-hidden rounded-lg p-2 border transition-all hover:-translate-y-0.5 hover:shadow-md
+                                                ${item.status === 'approved' ? 'bg-green-50/80 border-green-100 text-green-900' :
+                                                    item.status === 'pending_approval' ? 'bg-amber-50/80 border-amber-100 text-amber-900 dashed-border' :
+                                                        item.status === 'published' ? 'bg-gray-900 text-white border-gray-800' :
+                                                            'bg-white border-gray-200 text-gray-500'
+                                                }
+                                            `}
                                         >
-                                            {item.type === 'reel' ? <Video className="w-3 h-3 flex-shrink-0" /> : <ImageIcon className="w-3 h-3 flex-shrink-0" />}
-                                            <span className="truncate">{item.concept}</span>
+                                            {/* Status Indicator Line */}
+                                            <div className={`absolute left-0 top-0 bottom-0 w-1 
+                                                ${item.status === 'approved' ? 'bg-green-500' :
+                                                    item.status === 'pending_approval' ? 'bg-amber-400' :
+                                                        item.status === 'published' ? 'bg-gray-700' : 'bg-gray-300'}
+                                            `} />
+
+                                            <div className="pl-2 flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-1.5 text-[10px] opacity-70 uppercase tracking-wider font-bold">
+                                                    {item.type === 'reel' ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
+                                                    {item.platforms?.[0] || 'IG'}
+                                                </div>
+                                                <span className="text-xs font-medium truncate leading-tight">{item.concept}</span>
+                                            </div>
                                         </div>
                                     ))}
+                                </div>
+
+                                {/* Add Button on Hover */}
+                                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="w-6 h-6 rounded-full bg-gray-100 hover:bg-lumen-priority hover:text-white flex items-center justify-center text-gray-400 transition-colors">
+                                        <Plus className="w-3 h-3" />
+                                    </div>
                                 </div>
                             </div>
                         );
@@ -239,9 +288,9 @@ export default function PlannerPage() {
                             </td>
                             <td className="px-6 py-4">
                                 <span className={`px-2 py-1 rounded text-xs font-bold ${item.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                        item.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-700' :
-                                            item.status === 'published' ? 'bg-gray-800 text-white' :
-                                                'bg-gray-100 text-gray-600'
+                                    item.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-700' :
+                                        item.status === 'published' ? 'bg-gray-800 text-white' :
+                                            'bg-gray-100 text-gray-600'
                                     }`}>
                                     {item.status === 'pending_approval' ? 'Pendiente' :
                                         item.status === 'approved' ? 'Aprobado' :
@@ -316,11 +365,13 @@ export default function PlannerPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-                        <LayoutList className="w-6 h-6 text-lumen-priority" />
-                        Planificador
+                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
+                        <span className="bg-lumen-priority text-white p-2 rounded-xl shadow-lg shadow-amber-500/20">
+                            <LayoutList className="w-6 h-6" />
+                        </span>
+                        Planificador Editorial
                     </h1>
-                    <p className="text-gray-500 text-sm">Gestiona el contenido conectado a ERPNext.</p>
+                    <p className="text-gray-500 text-sm mt-1 ml-1">Gestiona el contenido de tus clientes conectado a ERPNext.</p>
                 </div>
 
                 <div className="flex items-center gap-4 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
@@ -377,42 +428,15 @@ export default function PlannerPage() {
             </div>
 
             {/* Edit/Create Modal (Simplified Reuse) */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-gray-900">
-                                {editingItem ? "✏️ Editar Tarea (ERPNext)" : "✨ Nueva Tarea"}
-                            </h2>
-                            <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}>
-                                <X className="w-5 h-5" />
-                            </Button>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <input type="date" className="p-2 border rounded" value={newItem.date} onChange={e => setNewItem({ ...newItem, date: e.target.value })} />
-                                <select className="p-2 border rounded" value={newItem.type} onChange={e => setNewItem({ ...newItem, type: e.target.value as any })}>
-                                    <option value="post">Post</option>
-                                    <option value="reel">Reel</option>
-                                    <option value="story">Story</option>
-                                    <option value="carousel">Carrusel</option>
-                                </select>
-                            </div>
-                            <input type="text" placeholder="Concepto" className="w-full p-2 border rounded" value={newItem.concept} onChange={e => setNewItem({ ...newItem, concept: e.target.value })} />
-                            <textarea placeholder="Caption/Detalles" className="w-full p-2 border rounded h-24" value={newItem.caption} onChange={e => setNewItem({ ...newItem, caption: e.target.value })} />
-                            <div className="flex gap-2">
-                                <span className={newItem.platforms?.includes('instagram') ? 'font-bold' : ''} onClick={() => setNewItem({ ...newItem, platforms: ['instagram'] })}>Instagram</span>
-                            </div>
-                        </div>
-
-                        <div className="mt-6 flex justify-between">
-                            {editingItem && <Button variant="ghost" className="text-red-500" onClick={handleDelete}><Trash2 className="w-4 h-4" /></Button>}
-                            <Button className="bg-lumen-priority text-white ml-auto" onClick={handleSave}>Guardar en ERPNext</Button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Edit/Create Modal */}
+            <ContentCreatorModal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                onSave={handleSave}
+                onDelete={handleDelete}
+                initialData={newItem}
+                isEditing={!!editingItem}
+            />
         </div>
     );
 }

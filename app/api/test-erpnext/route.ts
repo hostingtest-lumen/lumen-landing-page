@@ -3,8 +3,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
     const headers = {
         'Authorization': `token ${process.env.ERPNEXT_API_KEY}:${process.env.ERPNEXT_API_SECRET}`,
-        'Content-Type': 'application/json',
-        'Expect': ''
+        'Content-Type': 'application/json'
     };
     const url = process.env.ERPNEXT_URL;
 

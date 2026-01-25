@@ -1,0 +1,29 @@
+[
+  {
+    "name": "LEAD-2024-001",
+    "lead_name": "Colegio San Ignacio",
+    "title": "Renovación Web",
+    "mobile_no": "+58 412 123 4567",
+    "email_id": "contacto@sanignacio.edu.ve",
+    "status": "Lead",
+    "creation": "2026-01-20"
+  },
+  {
+    "name": "LEAD-2024-002",
+    "lead_name": "Parroquia La Ascensión",
+    "title": "Redes Sociales",
+    "mobile_no": "+58 414 987 6543",
+    "email_id": "parroquia@ascension.org",
+    "status": "In Progress",
+    "creation": "2026-01-22"
+  },
+  {
+    "name": "LEAD-2024-003",
+    "lead_name": "Fundación Cáritas",
+    "title": "Campaña Anual",
+    "mobile_no": "+58 424 555 5555",
+    "email_id": "director@caritas.org",
+    "status": "Opportunity",
+    "creation": "2026-01-24"
+  }
+]

@@ -1,47 +1,77 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { User, UserRole } from "@/types/auth";
 
 interface AuthContextType {
     user: User | null;
     isLoading: boolean;
+    isAuthenticated: boolean;
     switchRole: (role: UserRole) => void;
     updateProfile: (data: Partial<User>) => void;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const DEFAULT_USER: User = {
-    id: "u-001",
-    name: "Kevin Flores",
-    email: "kevin@lumencreativo.com",
-    role: "admin",
-    bio: "Fundador y Líder de Visión en Lumen Creativo.",
-    location: "Buenos Aires, Argentina",
-    phone: "+54 9 11 1234 5678"
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+    const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Load from localStorage or use default
-        const storedRole = localStorage.getItem("lumen_dev_role") as UserRole;
-        if (storedRole) {
-            setUser({ ...DEFAULT_USER, role: storedRole });
-        } else {
-            setUser(DEFAULT_USER);
-        }
-        setIsLoading(false);
-    }, []);
+        // Check for existing session
+        const checkSession = () => {
+            try {
+                const sessionData = localStorage.getItem("lumen_session");
+
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+
+                    // Create user from session
+                    setUser({
+                        id: "user-" + session.email,
+                        name: session.name,
+                        email: session.email,
+                        role: session.role as UserRole,
+                        bio: "",
+                        location: "Venezuela",
+                        phone: ""
+                    });
+                } else {
+                    setUser(null);
+
+                    // Redirect to login if accessing protected routes
+                    if (pathname?.startsWith("/dashboard")) {
+                        router.push("/login");
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking session:", error);
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkSession();
+    }, [pathname, router]);
 
     const switchRole = (role: UserRole) => {
         if (!user) return;
+
         const updatedUser = { ...user, role };
         setUser(updatedUser);
-        localStorage.setItem("lumen_dev_role", role);
+
+        // Update session
+        const sessionData = localStorage.getItem("lumen_session");
+        if (sessionData) {
+            const session = JSON.parse(sessionData);
+            session.role = role;
+            localStorage.setItem("lumen_session", JSON.stringify(session));
+        }
     };
 
     const updateProfile = (data: Partial<User>) => {
@@ -49,8 +79,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser({ ...user, ...data });
     };
 
+    const logout = () => {
+        localStorage.removeItem("lumen_session");
+        localStorage.removeItem("lumen_dev_role");
+        setUser(null);
+        router.push("/login");
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, switchRole, updateProfile }}>
+        <AuthContext.Provider value={{
+            user,
+            isLoading,
+            isAuthenticated: !!user,
+            switchRole,
+            updateProfile,
+            logout
+        }}>
             {children}
         </AuthContext.Provider>
     );

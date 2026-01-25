@@ -2,300 +2,332 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { clientService } from "@/lib/clients";
-import { deliverableService } from "@/lib/deliverables";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DeliverableCard } from "@/components/portal/DeliverableCard";
+import { DeliverableModal } from "@/components/portal/DeliverableModal";
+import { InvoiceList } from "@/components/portal/InvoiceList";
+import { ContentCalendar } from "@/components/portal/ContentCalendar";
+import { ProjectProgress } from "@/components/portal/ProjectProgress";
+import { SupportChat } from "@/components/portal/SupportChat";
+import { LayoutGrid, Calendar as CalendarIcon, FileText, CheckCircle2, AlertCircle, TrendingUp, Sparkles } from "lucide-react";
 import { Client } from "@/types/clients";
-import { Deliverable } from "@/types/deliverables";
-import { ContentGridItem } from "@/types/content-grid";
-import { ExternalLink, CheckCircle, Clock, Calendar, Check, MessageSquare, Instagram, Facebook, Linkedin, Video, Image as ImageIcon } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
+// Mock Data Generators
+const generateMockDeliverables = () => [
+    {
+        id: "1",
+        title: "Post Instagram - Lanzamiento",
+        type: "image" as const,
+        url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80",
+        status: "pending" as const,
+        date: "23 Ene 2026",
+        description: "Post de lanzamiento para la nueva campaña. Colores vibrantes y mensaje inspirador.",
+        clientName: "Cliente Demo"
+    },
+    {
+        id: "2",
+        title: "Reel - Behind the Scenes",
+        type: "video" as const,
+        url: "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
+        status: "approved" as const,
+        date: "20 Ene 2026",
+        description: "Video mostrando el proceso creativo del equipo.",
+        clientName: "Cliente Demo"
+    },
+    {
+        id: "3",
+        title: "Carousel Educativo",
+        type: "carousel" as const,
+        url: "https://images.unsplash.com/photo-1611162616475-46b635cb6868?w=800&q=80",
+        carouselUrls: [
+            "https://images.unsplash.com/photo-1611162618071-b39a2ec055fb?w=800&q=80",
+            "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=800&q=80"
+        ],
+        status: "pending" as const,
+        date: "18 Ene 2026",
+        description: "Carrusel de 3 slides con tips educativos para tu audiencia.",
+        clientName: "Cliente Demo"
+    },
+    {
+        id: "4",
+        title: "Story Promocional",
+        type: "image" as const,
+        url: "https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&q=80",
+        status: "changes_requested" as const,
+        date: "15 Ene 2026",
+        description: "Story para promoción especial de fin de mes.",
+        clientName: "Cliente Demo"
+    }
+];
 
-import { DollarSign, FileText, Download, TrendingUp } from "lucide-react";
+const generateMockInvoices = () => [
+    {
+        id: "inv-001",
+        number: "INV-2026-001",
+        date: "01 Ene 2026",
+        amount: 450.00,
+        status: "paid" as const,
+        pdfUrl: "#"
+    },
+    {
+        id: "inv-002",
+        number: "INV-2026-002",
+        date: "01 Feb 2026",
+        amount: 450.00,
+        status: "unpaid" as const,
+        pdfUrl: "#"
+    }
+];
 
-export default function ClientPortalPage() {
+export default function PortalPage() {
     const params = useParams();
-    const token = params?.token as string;
+    const token = params.token as string;
 
-    const [client, setClient] = useState<Client | undefined>(undefined);
-    const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
-    const [gridItems, setGridItems] = useState<ContentGridItem[]>([]);
-    const [financeData, setFinanceData] = useState<{ invoices: any[], payments: any[] }>({ invoices: [], payments: [] });
-    const [documents, setDocuments] = useState<any[]>([]);
+    const [client, setClient] = useState<Client | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'deliverables' | 'planning' | 'finance' | 'documents'>('deliverables');
+    const [error, setError] = useState("");
+
+    // State for interactive deliverables
+    const [deliverables, setDeliverables] = useState(generateMockDeliverables());
+
+    // Modal state
+    const [selectedDeliverable, setSelectedDeliverable] = useState<typeof deliverables[0] | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        if (token) {
-            loadData();
-        }
+        // Validate Token & Fetch Client
+        const fetchClientData = async () => {
+            try {
+                // Demo mode - accept any token with 'demo' or just show demo content
+                if (token === 'demo' || token.includes('demo')) {
+                    setClient({
+                        id: 'demo',
+                        name: 'Cliente Demo',
+                        token: 'demo',
+                        erpId: 'DEMO-001'
+                    });
+                    setLoading(false);
+                    return;
+                }
+
+                // Try to fetch real client data
+                const res = await fetch('/api/clients');
+                if (res.ok) {
+                    const data = await res.json();
+                    const found = data.clients?.find((c: Client) => c.token === token);
+
+                    if (found) {
+                        setClient(found);
+                    } else {
+                        // Fallback to demo mode for any token (MVP friendly)
+                        setClient({
+                            id: 'demo',
+                            name: 'Cliente Demo',
+                            token: token,
+                            erpId: 'DEMO-001'
+                        });
+                    }
+                } else {
+                    // API error - still show demo
+                    setClient({
+                        id: 'demo',
+                        name: 'Cliente Demo',
+                        token: token,
+                        erpId: 'DEMO-001'
+                    });
+                }
+            } catch (err) {
+                // Connection error - still show demo
+                setClient({
+                    id: 'demo',
+                    name: 'Cliente Demo',
+                    token: token,
+                    erpId: 'DEMO-001'
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchClientData();
     }, [token]);
 
-    const loadData = async () => {
-        const clientData = clientService.getByToken(token);
-
-        if (clientData) {
-            setClient(clientData);
-
-            // 1. Fetch Deliverables (Backend)
-            const allDeliverables = await deliverableService.getByClientId(clientData.id);
-            setDeliverables(allDeliverables);
-
-            // 2. Fetch Content Grid (ERPNext API)
-            try {
-                const erpIdentifier = clientData.erpId || clientData.name;
-                const res = await fetch(`/api/erp/tasks?id=${encodeURIComponent(erpIdentifier)}`);
-                if (res.ok) {
-                    const gridData: ContentGridItem[] = await res.json();
-                    const visibleItems = gridData
-                        .filter(i => i.status !== 'draft')
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                    setGridItems(visibleItems);
-                }
-            } catch (e) {
-                console.error("Error loading grid", e);
-            }
-
-            // 3. Fetch Finance & Docs
-            try {
-                // Assuming clientData.name maps to Customer Name in ERPNext
-                const financeRes = await fetch(`/api/erp/client-finance?clientName=${encodeURIComponent(clientData.name)}`);
-                if (financeRes.ok) setFinanceData(await financeRes.json());
-
-                const docsRes = await fetch(`/api/erp/client-documents?clientName=${encodeURIComponent(clientData.name)}`);
-                if (docsRes.ok) {
-                    const docsJson = await docsRes.json();
-                    setDocuments(docsJson.files || []);
-                }
-            } catch (e) {
-                console.error("Error loading extra modules", e);
-            }
-        }
-        setLoading(false);
+    const handleApprove = (id: string) => {
+        setDeliverables(prev => prev.map(d => d.id === id ? { ...d, status: 'approved' as const } : d));
     };
 
-    const handleApproveGridItem = async (item: ContentGridItem) => {
-        // ... (Same implementation as before) ...
-        if (item.status === 'approved') return;
-        setGridItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'approved' } : i));
-        try {
-            await fetch('/api/erp/tasks', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...item, status: 'approved' }) });
-            alert("✅ Idea aprobada.");
-        } catch (e) {
-            loadData();
-        }
+    const handleReject = (id: string, feedback?: string) => {
+        setDeliverables(prev => prev.map(d => d.id === id ? { ...d, status: 'changes_requested' as const } : d));
     };
 
-    if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-lumen-priority">Cargando portal...</div>;
-    if (!client) return <div className="min-h-screen flex items-center justify-center">Acceso Denegado</div>;
+    const openModal = (item: typeof deliverables[0]) => {
+        setSelectedDeliverable(item);
+        setIsModalOpen(true);
+    };
 
-    const pendingItems = deliverables.filter(d => d.status !== 'approved');
-    const approvedItems = deliverables.filter(d => d.status === 'approved');
+    const pendingCount = deliverables.filter(d => d.status === 'pending').length;
+    const approvedCount = deliverables.filter(d => d.status === 'approved').length;
 
-    // Calculations for Finance Tab
-    const totalOutstanding = financeData.invoices.reduce((acc, curr) => acc + curr.outstanding_amount, 0);
-
-    return (
-        <div className="min-h-screen bg-white font-sans text-gray-900">
-            {/* Header */}
-            <header className="bg-lumen-structure text-white p-6 sticky top-0 z-20 shadow-lg">
-                <div className="max-w-4xl mx-auto flex justify-between items-center">
-                    <div>
-                        <p className="text-xs text-lumen-priority uppercase tracking-widest font-bold mb-1">Portal de Cliente</p>
-                        <h1 className="text-lg md:text-xl font-bold leading-tight">{client.name}</h1>
-                    </div>
-                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold">
-                        {client.name.substring(0, 2).toUpperCase()}
-                    </div>
-                </div>
-            </header>
-
-            {/* Tabs */}
-            <div className="bg-white border-b border-gray-200 sticky top-[88px] z-10 overflow-x-auto">
-                <div className="max-w-4xl mx-auto flex">
-                    <button onClick={() => setActiveTab('deliverables')} className={`px-6 py-4 text-sm font-bold border-b-2 flex gap-2 ${activeTab === 'deliverables' ? 'border-lumen-priority text-lumen-priority' : 'border-transparent text-gray-500'}`}>
-                        <Clock className="w-4 h-4" /> Aprobaciones
-                        {pendingItems.length > 0 && <span className="bg-lumen-priority text-white text-[10px] px-1.5 rounded-full">{pendingItems.length}</span>}
-                    </button>
-                    <button onClick={() => setActiveTab('planning')} className={`px-6 py-4 text-sm font-bold border-b-2 flex gap-2 ${activeTab === 'planning' ? 'border-lumen-priority text-lumen-priority' : 'border-transparent text-gray-500'}`}>
-                        <Calendar className="w-4 h-4" /> Planificación
-                    </button>
-                    <button onClick={() => setActiveTab('finance')} className={`px-6 py-4 text-sm font-bold border-b-2 flex gap-2 ${activeTab === 'finance' ? 'border-lumen-priority text-lumen-priority' : 'border-transparent text-gray-500'}`}>
-                        <DollarSign className="w-4 h-4" /> Finanzas
-                        {totalOutstanding > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 rounded-full">!</span>}
-                    </button>
-                    <button onClick={() => setActiveTab('documents')} className={`px-6 py-4 text-sm font-bold border-b-2 flex gap-2 ${activeTab === 'documents' ? 'border-lumen-priority text-lumen-priority' : 'border-transparent text-gray-500'}`}>
-                        <FileText className="w-4 h-4" /> Documentos
-                    </button>
+    if (loading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-lumen-priority mx-auto mb-4"></div>
+                    <p className="text-gray-500 text-sm">Cargando tu portal...</p>
                 </div>
             </div>
+        );
+    }
 
-            <main className="max-w-4xl mx-auto p-4 md:p-8">
-                {activeTab === 'deliverables' && (
-                    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {/* Pending Section */}
-                        <section>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-8 h-8 bg-lumen-priority/10 rounded-full flex items-center justify-center text-lumen-priority">
-                                    <Clock className="w-5 h-5" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Pendiente de Aprobación</h2>
-                            </div>
+    if (error) {
+        return (
+            <div className="flex h-[60vh] flex-col items-center justify-center text-center p-8">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-500" />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900 mb-2">Acceso Denegado</h1>
+                <p className="text-gray-500 max-w-sm">{error}. Por favor contacta a tu ejecutivo de cuenta.</p>
+            </div>
+        );
+    }
 
-                            {pendingItems.length === 0 ? (
-                                <div className="bg-gray-50 border border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400">
-                                    <p>¡Todo al día! No tienes revisiones de diseño pendientes.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {pendingItems.map(item => (
-                                        <Link key={item.id} href={`/review/${item.id}`}>
-                                            <div className="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-lumen-priority/50 transition-all cursor-pointer overflow-hidden relative">
-                                                <div className="aspect-video bg-gray-100 flex items-center justify-center relative">
-                                                    {item.type === 'image' || item.type === 'carousel' ? (
-                                                        <img src={item.url} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                                                    ) : (
-                                                        <div className="w-12 h-12 bg-white/50 backdrop-blur rounded-full flex items-center justify-center shadow-sm">
-                                                            <ExternalLink className="w-5 h-5 text-gray-600" />
-                                                        </div>
-                                                    )}
-                                                    {item.status === 'changes_requested' && (
-                                                        <div className="absolute top-2 right-2 bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded shadow-sm">
-                                                            Cambios Solicitados
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="p-5">
-                                                    <h3 className="font-bold text-lg mb-1 group-hover:text-lumen-priority transition-colors">{item.title}</h3>
-                                                    <p className="text-gray-500 text-sm line-clamp-2">{item.description || "Sin descripción."}</p>
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+    return (
+        <div className="space-y-8 animate-in fade-in duration-700">
+            {/* Welcome Header */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                <div className="flex items-start justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                            Hola, {client?.name}
+                            <Sparkles className="w-6 h-6 text-amber-400" />
+                        </h1>
+                        <p className="text-gray-500 mt-1">Bienvenido a tu espacio de trabajo. Aquí tienes el resumen de hoy.</p>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Quick Stats */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 p-5 rounded-2xl flex items-center gap-4 hover:shadow-lg transition-shadow cursor-pointer">
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
+                        <CheckCircle2 className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-amber-800 uppercase tracking-wider">Por Aprobar</p>
+                        <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 p-5 rounded-2xl flex items-center gap-4 hover:shadow-lg transition-shadow">
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
+                        <TrendingUp className="w-6 h-6 text-green-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-green-800 uppercase tracking-wider">Aprobados</p>
+                        <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
+                    </div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 p-5 rounded-2xl flex items-center gap-4 hover:shadow-lg transition-shadow">
+                    <div className="p-3 bg-white rounded-xl shadow-sm">
+                        <CalendarIcon className="w-6 h-6 text-blue-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Próx. Publicación</p>
+                        <p className="text-2xl font-bold text-gray-900">23 Ene</p>
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Main Tabs */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+            >
+                <Tabs defaultValue="deliverables" className="w-full">
+                    <TabsList className="bg-gray-100/80 p-1 rounded-xl mb-6">
+                        <TabsTrigger value="deliverables" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
+                            <LayoutGrid className="w-4 h-4 mr-2" /> Entregables
+                            {pendingCount > 0 && (
+                                <span className="ml-2 bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                    {pendingCount}
+                                </span>
                             )}
-                        </section>
+                        </TabsTrigger>
+                        <TabsTrigger value="calendar" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
+                            <CalendarIcon className="w-4 h-4 mr-2" /> Calendario
+                        </TabsTrigger>
+                        <TabsTrigger value="progress" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
+                            <TrendingUp className="w-4 h-4 mr-2" /> Progreso
+                        </TabsTrigger>
+                        <TabsTrigger value="invoices" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm px-4">
+                            <FileText className="w-4 h-4 mr-2" /> Facturas
+                        </TabsTrigger>
+                    </TabsList>
 
-                        {/* APPROVED HISTORY (Keeping simplified for brevity) */}
-                        <section className="opacity-75">
-                            <h2 className="text-xl font-bold text-gray-700 mb-4">Diseños Aprobados</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {approvedItems.map(item => (
-                                    <Link key={item.id} href={`/review/${item.id}`}>
-                                        <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-white rounded border flex-center text-xs overflow-hidden">
-                                                {item.type === 'image' ? <img src={item.url} className="w-full h-full object-cover" /> : "MEDIA"}
-                                            </div>
-                                            <h4 className="font-medium text-sm text-gray-700 truncate">{item.title}</h4>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-                )}
-
-                {activeTab === 'planning' && (
-                    <div className="space-y-4 animate-in fade-in">
-                        {gridItems.length === 0 ? <p className="text-center text-gray-400 py-10">No hay planificación disponible.</p> :
-                            gridItems.map((item) => (
-                                <div key={item.id} className="bg-white border rounded-xl p-4 flex gap-4">
-                                    <div className="bg-gray-100 p-3 rounded flex flex-col items-center justify-center min-w-[3.5rem]">
-                                        <span className="text-lg font-bold">{new Date(item.date).getDate()}</span>
-                                        <span className="text-xs">{new Date(item.date).toLocaleString('es-ES', { month: 'short' })}</span>
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold">{item.concept}</h3>
-                                        <p className="text-sm text-gray-500">{item.caption}</p>
-                                        <div className="mt-2 text-sm">
-                                            {item.status === 'approved' ? <span className="text-green-600 font-bold">✅ Aprobado</span> :
-                                                <Button size="sm" onClick={() => handleApproveGridItem(item)}>Aprobar</Button>}
-                                        </div>
-                                    </div>
+                    <TabsContent value="deliverables" className="mt-0">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {deliverables.map(item => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => openModal(item)}
+                                    className="cursor-pointer transform transition-transform hover:scale-[1.02]"
+                                >
+                                    <DeliverableCard
+                                        item={item}
+                                        onApprove={(id) => { handleApprove(id); }}
+                                        onReject={(id) => { handleReject(id); }}
+                                    />
                                 </div>
-                            ))
-                        }
-                    </div>
-                )}
-
-                {activeTab === 'finance' && (
-                    <div className="animate-in fade-in space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                <p className="text-sm text-gray-500 mb-1">Total Pendiente de Pago</p>
-                                <h3 className={`text-3xl font-bold ${totalOutstanding > 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                    ${totalOutstanding.toLocaleString()}
-                                </h3>
-                                <p className="text-xs text-gray-400 mt-2">Facturas vencidas o por vencer.</p>
-                            </div>
-                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                                <p className="text-sm text-gray-500 mb-1">Pagos Realizados (Recientes)</p>
-                                <h3 className="text-3xl font-bold text-gray-900">
-                                    ${financeData.payments.reduce((acc, curr) => acc + curr.paid_amount, 0).toLocaleString()}
-                                </h3>
-                            </div>
+                            ))}
                         </div>
 
-                        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 bg-gray-50">
-                                <h3 className="font-bold text-gray-800">Facturas</h3>
+                        {deliverables.length === 0 && (
+                            <div className="bg-white border border-gray-100 rounded-2xl p-12 text-center text-gray-400">
+                                <LayoutGrid className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">Sin Entregables</h3>
+                                <p>No tienes entregables pendientes en este momento.</p>
                             </div>
-                            <table className="w-full text-sm">
-                                <thead className="text-left text-gray-500 bg-gray-50/50">
-                                    <tr>
-                                        <th className="p-4">Fecha</th>
-                                        <th className="p-4">Factura</th>
-                                        <th className="p-4">Estado</th>
-                                        <th className="p-4 text-right">Monto</th>
-                                        <th className="p-4"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {financeData.invoices.map((inv) => (
-                                        <tr key={inv.name} className="border-t border-gray-100">
-                                            <td className="p-4">{inv.posting_date}</td>
-                                            <td className="p-4 font-mono">{inv.name}</td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${inv.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                                                        inv.status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                                                    }`}>{inv.status}</span>
-                                            </td>
-                                            <td className="p-4 text-right font-bold">${inv.grand_total.toLocaleString()}</td>
-                                            <td className="p-4 text-right">
-                                                <Button size="sm" variant="ghost">Descargar</Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
+                        )}
+                    </TabsContent>
 
-                {activeTab === 'documents' && (
-                    <div className="animate-in fade-in grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {documents.map((doc) => (
-                            <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer" className="block">
-                                <div className="bg-white border rounded-xl p-6 hover:shadow-md transition-shadow flex flex-col items-center text-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
-                                        <FileText className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-gray-900 truncate max-w-[200px]" title={doc.name}>{doc.name}</h3>
-                                        <p className="text-xs text-gray-500">{doc.date}</p>
-                                    </div>
-                                    <span className="text-xs font-bold text-lumen-priority flex items-center gap-1">
-                                        <Download className="w-3 h-3" /> Descargar
-                                    </span>
-                                </div>
-                            </a>
-                        ))}
-                        {documents.length === 0 && <p className="col-span-3 text-center text-gray-400 py-10">No hay documentos compartidos.</p>}
-                    </div>
-                )}
+                    <TabsContent value="calendar">
+                        <ContentCalendar />
+                    </TabsContent>
 
-            </main>
+                    <TabsContent value="progress">
+                        <ProjectProgress />
+                    </TabsContent>
+
+                    <TabsContent value="invoices">
+                        <InvoiceList
+                            clientName={client?.name !== 'Cliente Demo' ? client?.name : undefined}
+                            invoices={client?.name === 'Cliente Demo' ? generateMockInvoices() : undefined}
+                        />
+                    </TabsContent>
+                </Tabs>
+            </motion.div>
+
+            {/* Deliverable Modal */}
+            <DeliverableModal
+                item={selectedDeliverable}
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onApprove={handleApprove}
+                onReject={handleReject}
+            />
+
+            {/* Support Chat Widget */}
+            <SupportChat />
         </div>
     );
 }

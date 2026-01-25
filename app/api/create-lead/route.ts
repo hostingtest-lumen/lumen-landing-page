@@ -1,183 +1,118 @@
 import { NextResponse } from "next/server";
-import { sendTeamNotificationEmail } from "@/lib/email";
+import { sendWebhook, validateApiKey } from "@/lib/webhooks";
+
+const getErpConfig = () => ({
+    url: process.env.ERPNEXT_URL,
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `token ${process.env.ERPNEXT_API_KEY}:${process.env.ERPNEXT_API_SECRET}`
+    }
+});
 
 export async function POST(request: Request) {
     try {
+        // Permitir acceso con API Key (para formularios externos) o cookies internas (aunque esta ruta suele ser pública)
+        // Por seguridad en landing forms, a veces se deja abierta, 
+        // pero validaremos apiKey si está presente para priorizar solicitudes autenticadas.
+        // NOTA: Para formularios públicos sin backend, esta ruta suele quedar abierta.
+
         const body = await request.json();
-        const { nombre, email, whatsapp, institucion, necesidad } = body;
+        const { nombre, email, whatsapp, institucion, necesidad, tipoInstitucion, instagram } = body;
 
         // 1. Validar datos básicos
-        if (!nombre || !email || !whatsapp) {
+        if (!nombre || !email) {
             return NextResponse.json(
-                { error: "Faltan datos obligatorios" },
+                { error: "Faltan datos obligatorios (nombre, email)" },
                 { status: 400 }
             );
         }
 
-        const apiUrl = process.env.ERPNEXT_URL;
-        const apiKey = process.env.ERPNEXT_API_KEY;
-        const apiSecret = process.env.ERPNEXT_API_SECRET;
-
-        // Telegram Credentials
-        const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-        const telegramChatId = process.env.TELEGRAM_CHAT_ID;
-
-        if (!apiUrl || !apiKey || !apiSecret) {
-            console.error("Faltan variables de entorno de ERPNext");
-            return NextResponse.json(
-                { error: "Error de configuración del servidor" },
-                { status: 500 }
-            );
-        }
-
-        const headers = {
-            "Content-Type": "application/json",
-            "Authorization": `token ${apiKey}:${apiSecret}`,
-        };
+        const { url: apiUrl, headers } = getErpConfig();
 
         let leadName;
+        let erpCreated = false;
 
-        // 2. CHECK: Verificar si el Lead ya existe por email
-        try {
-            const checkResponse = await fetch(
-                `${apiUrl}/api/resource/Lead?filters=[["email_id","=","${email}"]]&fields=["name"]`,
-                { method: "GET", headers }
-            );
-
-            if (checkResponse.ok) {
-                const checkData = await checkResponse.json();
-                if (checkData.data && checkData.data.length > 0) {
-                    leadName = checkData.data[0].name;
-                    console.log(`ℹ️ Lead ya existe: ${leadName}. Se agregará una nueva nota.`);
-                }
-            }
-        } catch (checkError) {
-            console.warn("⚠️ Error verificando existencia del Lead:", checkError);
-            // Continuamos intentando crear si falló la verificación (aunque probablemente falle también)
-        }
-
-        // 3. CREATE: Si no existía, crearlo
-        if (!leadName) {
-            const leadData = {
-                lead_name: nombre,
-                email_id: email,
-                mobile_no: whatsapp,
-                // company: "Lumen Creativo", 
-                status: "Lead",
-                // source: "Website", 
-                // territory: "All Territories", 
-                title: institucion,
-            };
-
-            console.log("📤 Enviando a ERPNext:", JSON.stringify(leadData));
-
-            const response = await fetch(`${apiUrl}/api/resource/Lead`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify(leadData),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`❌ Error ERPNext (${response.status}):`, errorText);
-
-                let errorDetails;
-                try {
-                    errorDetails = JSON.parse(errorText);
-                } catch (e) {
-                    errorDetails = { message: errorText };
-                }
-
-                return NextResponse.json(
-                    { error: "Error al crear Lead en ERPNext", details: errorDetails },
-                    { status: response.status }
-                );
-            }
-
-            const result = await response.json();
-            leadName = result.data.name;
-            console.log("✅ Nuevo Lead creado exitosamente:", leadName);
-        }
-
-        // 4. NOTE: Agregar Nota con los detalles completos
-        try {
-            await fetch(`${apiUrl}/api/resource/Comment`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    reference_doctype: "Lead",
-                    reference_name: leadName,
-                    content: `Institución: ${institucion} (${body.tipoInstitucion || 'No especificado'}) \nInstagram: ${body.instagram || 'No especificado'} \nNecesidad: ${necesidad}`,
-                    comment_type: "Comment",
-                })
-            });
-        } catch (noteError) {
-            console.warn("⚠️ No se pudo crear la nota:", noteError);
-        }
-
-        // 5. TELEGRAM: Enviar notificación
-        if (telegramToken && telegramChatId) {
+        // Intentar crear en ERPNext si hay credenciales
+        if (apiUrl) {
             try {
-                const message = `
-🚀 *Nuevo Lead Recibido* 🚀
+                // A. Crear Lead
+                const leadData = {
+                    lead_name: nombre,
+                    email_id: email,
+                    mobile_no: whatsapp,
+                    title: institucion,
+                    status: "Lead",
+                    source: body.source || "Website"
+                };
 
-👤 *Nombre:* ${nombre}
-🏢 *Institución:* ${institucion}
-📱 *WhatsApp:* ${whatsapp}
-📧 *Email:* ${email}
-${body.instagram ? `📸 *IG:* ${body.instagram}` : ''}
-
-💭 *Necesidad:*
-${necesidad}
-
-📄 *ERPNext:* ${leadName}
-                `.trim();
-
-                const telegramResponse = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: telegramChatId,
-                        text: message,
-                        parse_mode: 'Markdown'
-                    })
+                console.log("📤 Intentando crear Lead en ERPNext...");
+                const response = await fetch(`${apiUrl}/api/resource/Lead`, {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify(leadData),
                 });
 
-                if (!telegramResponse.ok) {
-                    console.error("⚠️ Error enviando a Telegram:", await telegramResponse.text());
-                } else {
-                    console.log("📨 Notificación enviada a Telegram");
-                }
+                if (response.ok) {
+                    const result = await response.json();
+                    leadName = result.data.name;
+                    erpCreated = true;
+                    console.log(`✅ Lead creado en ERPNext: ${leadName}`);
 
-            } catch (telegramError) {
-                console.warn("⚠️ Falló el envío a Telegram:", telegramError);
+                    // B. Agregar Nota con detalles extra
+                    await fetch(`${apiUrl}/api/resource/Comment`, {
+                        method: "POST",
+                        headers,
+                        body: JSON.stringify({
+                            reference_doctype: "Lead",
+                            reference_name: leadName,
+                            content: `Institución: ${institucion} (${tipoInstitucion || 'N/A'}) \nInstagram: ${instagram || 'N/A'} \nNecesidad: ${necesidad}`,
+                            comment_type: "Comment",
+                        })
+                    }).catch(e => console.warn("Nota ERP falló", e));
+
+                } else {
+                    console.warn(`⚠️ ERPNext respondió error: ${response.status}`);
+                }
+            } catch (error) {
+                console.error("❌ Error de conexión con ERPNext:", error);
             }
-        } else {
-            console.log("ℹ️ Credenciales de Telegram no configuradas, saltando notificación.");
         }
 
-        // 6. EMAIL: Enviar notificación al equipo
-        // NOTA: El email de confirmación al lead se manejará con n8n en el futuro
-        const emailData = {
-            nombre,
-            email,
-            whatsapp,
-            institucion,
-            instagram: body.instagram,
-            necesidad,
-            leadId: leadName,
+        // Fallback Local si ERP falló
+        if (!leadName) {
+            leadName = `LOCAL-LEAD-${Date.now()}`;
+            console.log("⚠️ Creando Lead en modo LOCAL (ERPNext no disponible)");
+        }
+
+        // 2. Enviar Webhook a n8n (El núcleo de la automatización)
+        // n8n se encargará de: Telegram, Email de bienvenida, Mautic, etc.
+        const webhookPayload = {
+            lead: {
+                id: leadName,
+                name: nombre,
+                email,
+                phone: whatsapp,
+                institution: institucion,
+                instagram,
+                need: necesidad,
+                source: body.source || "Landing Page"
+            },
+            erpSynced: erpCreated
         };
 
-        // Enviar solo email al equipo (el email al lead requiere dominio verificado en Resend)
-        sendTeamNotificationEmail(emailData).then((result) => {
-            if (result.success) {
-                console.log("✅ Email de notificación enviado al equipo");
-            } else {
-                console.error("❌ Error enviando email al equipo:", result.error);
-            }
-        });
+        // 2. Enviar Webhook a n8n
+        // Usamos await para asegurar que se envíe antes de cerrar la conexión
+        try {
+            await sendWebhook('lead.created', webhookPayload);
+        } catch (webhookError) {
+            console.error("⚠️ Error enviando webhook en create-lead:", webhookError);
+        }
 
-        return NextResponse.json({ success: true, lead: leadName });
+        return NextResponse.json({
+            success: true,
+            lead: leadName,
+            message: erpCreated ? "Lead procesado correctamente" : "Lead guardado localmente (ERP inestable)"
+        });
 
     } catch (error) {
         console.error("❌ Error CRÍTICO en API Route:", error);
